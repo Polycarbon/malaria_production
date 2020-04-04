@@ -1,24 +1,13 @@
-import numpy as np
-import keras.models
-from keras.models import model_from_json
-from scipy.misc import imread, imresize,imshow
 import tensorflow as tf
+from keras_retinanet import models
+from keras_retinanet.utils.image import preprocess_image, resize_image
+import numpy as np
+
+global model, graph
 
 
-def init(): 
-	json_file = open('model.json','r')
-	loaded_model_json = json_file.read()
-	json_file.close()
-	loaded_model = model_from_json(loaded_model_json)
-	#load woeights into new model
-	loaded_model.load_weights("model.h5")
-	print("Loaded Model from disk")
-
-	#compile and evaluate loaded model
-	loaded_model.compile(loss='categorical_crossentropy',optimizer='adam',metrics=['accuracy'])
-	#loss,accuracy = model.evaluate(X_test,y_test)
-	#print('loss:', loss)
-	#print('accuracy:', accuracy)
-	graph = tf.get_default_graph()
-
-	return loaded_model,graph
+def init():
+    model = models.load_model('model/resnet50v2conf_67.h5', backbone_name='resnet50')
+    print("Loaded Model from disk")
+    graph = tf.get_default_graph()
+    return model,graph
