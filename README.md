@@ -2,7 +2,8 @@
 
 ## Dependencies Installation
 ```python setup.py build_ext --inplace```<br>
-```sudo pip install -r requirements.txt```
+```sudo pip install -r requirements.txt```<br>
+```python app.py```
 
 ## Usage
 
