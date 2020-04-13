@@ -18,3 +18,5 @@ keras_retinanet/backend/__pycache__/
 keras_retinanet/__pycache__/
 
 build/*
+
+.vscode/
