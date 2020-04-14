@@ -73,7 +73,7 @@ def video_worker(RTSP_URL,is_imshow=False):
         q.put(frame)
         if not ret:
             break
-        while 1:
+        while not q.empty():
             frame = q.get()
             if frame is not None:
                 if is_imshow: cv2.imshow('frame', frame)
