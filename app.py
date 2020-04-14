@@ -19,6 +19,7 @@ import re
 import cv2
 from multiprocessing import Process
 from threading import Thread
+import queue
 import numpy as np
 import flask
 from flask import Flask, render_template, request, jsonify, url_for
@@ -63,16 +64,22 @@ def image_processing(buffer):
 
 def video_worker(RTSP_URL,is_imshow=False):
     buffer = []
+    q = queue.Queue()
     # RTSP_URL = rtsp://<IP>:<PORT>
     cap = cv2.VideoCapture(RTSP_URL)
     print("cap is on")
     while cap.isOpened():
         ret, frame = cap.read()
+        q.put(frame)
         if not ret:
             break
-        if frame is not None:
-            if is_imshow: cv2.imshow('frame', frame)
-            buffer.append(frame)
+        while 1:
+            frame = q.get()
+            if frame is not None:
+                if is_imshow: cv2.imshow('frame', frame)
+                buffer.append(frame)
+            else: break
+
         if is_imshow and cv2.waitKey(20) & 0xFF == ord('q'): break
     cap.release()
     cv2.destroyAllWindows()
@@ -168,6 +175,7 @@ def predict():
     print("debug")
     # read the image into memory
     x = cv2.imread('./static/output.png')
+    
 
     print("debug2")
     return jsonify({"data": [[1, 1, 1, 1], [2, 2, 2, 2]], "number": 2})
