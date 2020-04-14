@@ -17,18 +17,20 @@ import re
 # for you automatically.
 # requests are objects that flask handles (get set post, etc)
 import cv2
-from flask import Flask, render_template, request , jsonify
+from flask import Flask, render_template, request, jsonify
 # scientific computing library for saving, reading, and resizing images
-from scipy.misc import imread, imresize
+# from scipy.misc import imread, imresize
 
 # tell our app where our saved model is
 # sys.path.append(os.path.abspath("./model"))
-from model.load import *
+# from model.load import *
 
 # initalize our flask app
 app = Flask(__name__)
 # global vars for easy reusability
 global model
+
+
 # initialize these variables
 # model, graph = init()
 
@@ -49,16 +51,30 @@ def index():
     # render out pre-built HTML file right on the index page
     return render_template("index.html")
 
-@app.route('/postRtsp',methods=['POST'])
-def postRtsp():
-    print(request.json)
-    return  jsonify(request.json) , 201
 
-@app.route('/getImage',methods=['GET'])
+@app.route('/postRtsp', methods=['POST'])
+def postRtsp():
+    rtsp_address = request.json['endpoint']
+    print(rtsp_address)
+    vcap = cv2.VideoCapture(rtsp_address)
+    print("success")
+    i= 0
+    while vcap.isOpened():
+        ret, frame = vcap.read()
+        if not ret:
+            break
+        cv2.imshow('VIDEO', frame)
+        if cv2.waitKey(20) & 0xff == ord('q'):
+            break
+    vcap.release()
+    cv2.destroyAllWindows()
+    return jsonify(request.json), 201
+
+@app.route('/getImage', methods=['GET'])
 def getImage():
-    data = {"image":"BASE64","number":5}
-    return  jsonify(data) , 201
-    
+    data = {"image": "BASE64", "number": 5}
+    return jsonify(data), 201
+
 
 @app.route('/predict/', methods=['GET', 'POST'])
 def predict():
