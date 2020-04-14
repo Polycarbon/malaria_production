@@ -17,20 +17,24 @@ import re
 # for you automatically.
 # requests are objects that flask handles (get set post, etc)
 import cv2
+from multiprocessing import Process
+from threading import Thread
 import numpy as np
 import flask
-from flask import Flask, render_template, request , jsonify,url_for
+from flask import Flask, render_template, request, jsonify, url_for
 # scientific computing library for saving, reading, and resizing images
-from scipy.misc import imread, imresize
+# from scipy.misc import imread, imresize
 
 # tell our app where our saved model is
 # sys.path.append(os.path.abspath("./model"))
-from model.load import *
+# from model.load import *
 
 # initalize our flask app
 app = Flask(__name__)
 # global vars for easy reusability
 global model
+
+
 # initialize these variables
 # model, graph = init()
 
@@ -44,9 +48,10 @@ def convertImage(imgData1):
     with open('./static/output.png', 'wb') as output:
         output.write(imgdata)
 
+
 def image_processing(buffer):
     # buffer = list(map(lambda frame: cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY),buffer))
-    v_max,v_min = 10,1
+    v_max, v_min = 10, 1
     frameDiff = np.abs(np.diff(buffer, axis=0))
     frameDiffSum = np.sum(frameDiff, axis=0)
     av = (frameDiffSum / len(frameDiff))
@@ -56,21 +61,24 @@ def image_processing(buffer):
     image = np.stack((normframe,) * 3, axis=-1)
     return image
 
-def get_buffer(RTSP_URL,is_imshow=False):
+def video_worker(RTSP_URL,is_imshow=False):
     buffer = []
     # RTSP_URL = rtsp://<IP>:<PORT>
     cap = cv2.VideoCapture(RTSP_URL)
     print("cap is on")
     while cap.isOpened():
-        _,frame = cap.read()
+        ret, frame = cap.read()
+        if not ret:
+            break
         if frame is not None:
-            if is_imshow: cv2.imshow('frame',frame)
+            if is_imshow: cv2.imshow('frame', frame)
             buffer.append(frame)
         if is_imshow and cv2.waitKey(20) & 0xFF == ord('q'): break
     cap.release()
     cv2.destroyAllWindows()
-    print("len(buffer):",buffer)
+    print("len(buffer):", len(buffer))
     return buffer
+
 
 def get_predict(image):
     image = preprocess_image(image)
@@ -84,15 +92,17 @@ def get_predict(image):
         if score < 0.5:
             break
         data.append({'box': box.tolist(), 'score': float(score)})
-    response = {'data': data,'number': len(data)}
+    response = {'data': data, 'number': len(data)}
     return response
 
-def get_draw_box_image(image,bounding_box):
+
+def get_draw_box_image(image, bounding_box):
     for box in bounding_box:
         cv2.rectangle(image, (int(box["box"][0]), int(box["box"][1])),
-                              (int(box["box"][2]), int(box["box"][3])),
-                              (0, 255, 0), 2)
+                      (int(box["box"][2]), int(box["box"][3])),
+                      (0, 255, 0), 2)
     return image
+
 
 @app.route('/')
 def index():
@@ -100,7 +110,8 @@ def index():
     # render out pre-built HTML file right on the index page
     return render_template("index.html")
 
-@app.route('/postRtsp',methods=['POST'])
+
+@app.route('/postRtsp', methods=['POST'])
 def postRtsp():
     """
     global origin_image , process_image
@@ -117,12 +128,16 @@ def postRtsp():
     origin_image = buffer[3]
 
     """
-
+    rtsp_url = request.json["endpoint"]
+    worker = Thread(target=video_worker, args=(rtsp_url,True))
+    worker.start()
+    worker.join()
     print(request.json)
     # return  jsonify(request.json)
     return "OK!!"
 
-@app.route('/getImage',methods=['GET'])
+
+@app.route('/getImage', methods=['GET'])
 def getImage():
     """
     pred = get_predict(process_image)
@@ -136,9 +151,10 @@ def getImage():
 
     number = pred["number"]
     """
-    data = {"data":"/static/output.png","number":2}
-    return  jsonify(data)
+    data = {"data": "/static/output.png", "number": 2}
+    return jsonify(data)
     # URL for image is <SERVER_IP>:<PORT>/static/output.png
+
 
 @app.route('/predict/', methods=['GET', 'POST'])
 def predict():
@@ -154,19 +170,6 @@ def predict():
     x = cv2.imread('./static/output.png')
 
     print("debug2")
-    x = preprocess_image(x)
-    x, scale = resize_image(x)
-    with graph.as_default():
-        boxes, scores, labels = model.predict_on_batch(np.expand_dims(x, axis=0))
-    boxes /= scale
-    data = []
-    for i, (box, score) in enumerate(zip(boxes[0], scores[0])):
-        # scores are sorted so we can break
-        if score < 0.5:
-            break
-        data.append({'box': box.tolist(), 'score': float(score)})
-    response = {'data': data}
-    # return response
     return jsonify({"data": [[1, 1, 1, 1], [2, 2, 2, 2]], "number": 2})
 
 
