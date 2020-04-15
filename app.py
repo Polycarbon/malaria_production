@@ -6,6 +6,7 @@
 import base64
 # system level operations (like loading files)
 # for reading operating system data
+import json
 import os
 # for matrix math
 # for importing our keras model
@@ -19,6 +20,7 @@ import re
 import cv2
 from multiprocessing import Process
 from threading import Thread
+import queue
 import numpy as np
 import flask
 from flask import Flask, render_template, request, jsonify, url_for
@@ -65,14 +67,17 @@ def image_processing(buffer):
     image = np.stack((normframe,) * 3, axis=-1)
     return image
 
-def video_worker(RTSP_URL,is_imshow=False):
+
+def video_worker(RTSP_URL, is_imshow=False):
     buffer = []
+    q = queue.Queue()
     # RTSP_URL = rtsp://<IP>:<PORT>
     cap = cv2.VideoCapture(RTSP_URL)
+    # cap.set(cv2.CAP_PROP_BUFFERSIZE, 0)
     print("cap is on")
     while cap.isOpened():
         ret, frame = cap.read()
-        if not ret:
+        if ret is False:
             break
         if frame is not None:
             grayframe = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype('int16')
@@ -145,7 +150,7 @@ def postRtsp():
     worker.join()
     print(request.json)
     # return  jsonify(request.json)
-    res = {'image': 'http://192.168.1.15:5000/static/output.png', "number": 2}
+    res = {'image': 'http://192.168.1.103:5000/static/output.png'}
     return jsonify(res)
 
 #FRONTEND: URL for image is <SERVER_IP>:<PORT>/static/output.png
