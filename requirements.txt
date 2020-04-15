@@ -1,16 +1,15 @@
 Flask == 0.11.1
 gevent
 gunicorn
-keras
+keras==2.2.4
 h5py
 pillow
 cython
 h5py
-keras
 matplotlib
 numpy>=1.14
 opencv-python>=3.3.0
-tensorflow
+tensorflow==1.14
 scipy==1.1.0
 keras-resnet
 werkzeug
