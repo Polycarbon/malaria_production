@@ -20,3 +20,8 @@ keras_retinanet/__pycache__/
 build/*
 
 .vscode/
+
+
+*.mp4
+
+videos/
