@@ -6,6 +6,7 @@
 import base64
 # system level operations (like loading files)
 # for reading operating system data
+import json
 import os
 # for matrix math
 # for importing our keras model
@@ -23,6 +24,7 @@ import queue
 import numpy as np
 import flask
 from flask import Flask, render_template, request, jsonify, url_for
+
 # scientific computing library for saving, reading, and resizing images
 # from scipy.misc import imread, imresize
 
@@ -62,25 +64,24 @@ def image_processing(buffer):
     image = np.stack((normframe,) * 3, axis=-1)
     return image
 
-def video_worker(RTSP_URL,is_imshow=False):
+
+def video_worker(RTSP_URL, is_imshow=False):
     buffer = []
     q = queue.Queue()
     # RTSP_URL = rtsp://<IP>:<PORT>
     cap = cv2.VideoCapture(RTSP_URL)
+    # cap.set(cv2.CAP_PROP_BUFFERSIZE, 0)
     print("cap is on")
     while cap.isOpened():
         ret, frame = cap.read()
-        q.put(frame)
-        if not ret:
+        if ret is False:
             break
-        while not q.empty():
-            frame = q.get()
-            if frame is not None:
-                if is_imshow: cv2.imshow('frame', frame)
-                buffer.append(frame)
-            else: break
 
-        if is_imshow and cv2.waitKey(20) & 0xFF == ord('q'): break
+        if is_imshow: cv2.imshow('frame', frame)
+        buffer.append(frame)
+        if is_imshow and cv2.waitKey(10) & 0xFF == ord('q'):
+            break
+
     cap.release()
     cv2.destroyAllWindows()
     print("len(buffer):", len(buffer))
@@ -136,12 +137,12 @@ def postRtsp():
 
     """
     rtsp_url = request.json["endpoint"]
-    worker = Thread(target=video_worker, args=(rtsp_url,True))
-    worker.start()
-    worker.join()
-    print(request.json)
-    # return  jsonify(request.json)
-    return "OK!!"
+    # worker = Thread(target=video_worker, args=(rtsp_url, True))
+    # worker.start()
+    # worker.join()
+    # print(request.json)
+    res = {'image': 'http://192.168.1.103:5000/static/output.png'}
+    return jsonify(res)
 
 
 @app.route('/getImage', methods=['GET'])
@@ -175,7 +176,6 @@ def predict():
     print("debug")
     # read the image into memory
     x = cv2.imread('./static/output.png')
-    
 
     print("debug2")
     return jsonify({"data": [[1, 1, 1, 1], [2, 2, 2, 2]], "number": 2})
