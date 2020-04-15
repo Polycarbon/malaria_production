@@ -22,15 +22,18 @@ from threading import Thread
 import numpy as np
 import flask
 from flask import Flask, render_template, request, jsonify, url_for
+from werkzeug import secure_filename
 # scientific computing library for saving, reading, and resizing images
 # from scipy.misc import imread, imresize
 
 # tell our app where our saved model is
 # sys.path.append(os.path.abspath("./model"))
-# from model.load import *
+from model.load import *
 
 # initalize our flask app
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = "./videos"
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif','mp4',"avi"}
 # global vars for easy reusability
 global model
 
@@ -50,7 +53,8 @@ def convertImage(imgData1):
 
 
 def image_processing(buffer):
-    # buffer = list(map(lambda frame: cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY),buffer))
+    # buffer = list(map(lambda frame: cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype('int16'),buffer))
+    print("shape buffer:",np.array(buffer).shape)
     v_max, v_min = 10, 1
     frameDiff = np.abs(np.diff(buffer, axis=0))
     frameDiffSum = np.sum(frameDiff, axis=0)
@@ -71,12 +75,16 @@ def video_worker(RTSP_URL,is_imshow=False):
         if not ret:
             break
         if frame is not None:
+            grayframe = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype('int16')
+            buffer.append(grayframe)
             if is_imshow: cv2.imshow('frame', frame)
-            buffer.append(frame)
-        if is_imshow and cv2.waitKey(20) & 0xFF == ord('q'): break
+        if is_imshow and cv2.waitKey(2) & 0xFF == ord('q'): break
     cap.release()
     cv2.destroyAllWindows()
     print("len(buffer):", len(buffer))
+    image_process = image_processing(buffer)
+    cv2.imwrite("./static/output.png", image_process)
+    print("image_process shape:",image_process.shape)
     return buffer
 
 
@@ -102,6 +110,9 @@ def get_draw_box_image(image, bounding_box):
                       (int(box["box"][2]), int(box["box"][3])),
                       (0, 255, 0), 2)
     return image
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @app.route('/')
@@ -129,14 +140,15 @@ def postRtsp():
 
     """
     rtsp_url = request.json["endpoint"]
-    worker = Thread(target=video_worker, args=(rtsp_url,True))
+    worker = Thread(target=video_worker, args=(rtsp_url,False))
     worker.start()
     worker.join()
     print(request.json)
     # return  jsonify(request.json)
-    return "OK!!"
+    res = {'image': 'http://192.168.1.15:5000/static/output.png', "number": 2}
+    return jsonify(res)
 
-
+#FRONTEND: URL for image is <SERVER_IP>:<PORT>/static/output.png
 @app.route('/getImage', methods=['GET'])
 def getImage():
     """
@@ -153,7 +165,18 @@ def getImage():
     """
     data = {"data": "/static/output.png", "number": 2}
     return jsonify(data)
-    # URL for image is <SERVER_IP>:<PORT>/static/output.png
+
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        if 'file' not in request.files: return 'No file part'
+        f = request.files['file']
+        if f.filename == '': return 'No selected file'
+        if f and allowed_file(f.filename):
+            filename  = secure_filename(f.filename)
+            f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename ))
+            return 'file uploaded successfully'
 
 
 @app.route('/predict/', methods=['GET', 'POST'])
@@ -178,5 +201,6 @@ if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     # run the app locally on the givn port
     app.run(host='0.0.0.0', port=port)
+
 # optional if we want to run in debugging mode
 # app.run(debug=True)
