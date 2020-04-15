@@ -25,3 +25,9 @@ build/*
 *.mp4
 
 videos/
+
+.env/
+
+*.h5
+
+static/output.png
