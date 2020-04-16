@@ -31,3 +31,5 @@ videos/
 *.h5
 
 static/output.png
+
+*.pyc
