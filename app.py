@@ -7,7 +7,7 @@ import base64
 # system level operations (like loading files)
 # for reading operating system data
 import json
-import os
+import os , time
 # for matrix math
 # for importing our keras model
 # for regular expressions, saves time dealing with string data
@@ -20,11 +20,12 @@ import re
 import cv2
 from multiprocessing import Process
 from threading import Thread
-import queue
 import numpy as np
 import flask
 from flask import Flask, render_template, request, jsonify, url_for
 from werkzeug import secure_filename
+from network.get_ip import get_ip
+
 # scientific computing library for saving, reading, and resizing images
 # from scipy.misc import imread, imresize
 
@@ -35,13 +36,19 @@ from model.load import *
 # initalize our flask app
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = "./videos"
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif','mp4',"avi"}
+ALLOWED_EXTENSIONS = {'mp4',"avi"}
+
+# initalize ip address and path
+# WARNING: should close firewall. 
+SERVER_IP = get_ip(interface='wifi') if get_ip(interface='wifi') is not None else "127.0.0.1"
+PORT = 5000
+STATIC_PATH = 'http://'+SERVER_IP+':'+str(PORT)+'/static/'
+
 # global vars for easy reusability
 global model
 
-
 # initialize these variables
-# model, graph = init()
+model, graph = init()
 
 
 # decoding an image from base64 into raw representation
@@ -54,9 +61,21 @@ def convertImage(imgData1):
         output.write(imgdata)
 
 
+def b64decode(image_path,save_path=None):
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read())
+        decode_string = encoded_string.decode()
+    URI_form = 'data:image/png;base64,'+decode_string
+    
+    if save_path not in [None,"",".","./"] :
+        with open(save_path, "w") as txt:
+            txt.write(URI_form)
+    
+    return URI_form , decode_string
+
+
 def image_processing(buffer):
     # buffer = list(map(lambda frame: cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype('int16'),buffer))
-    print("shape buffer:",np.array(buffer).shape)
     v_max, v_min = 10, 1
     frameDiff = np.abs(np.diff(buffer, axis=0))
     frameDiffSum = np.sum(frameDiff, axis=0)
@@ -68,9 +87,10 @@ def image_processing(buffer):
     return image
 
 
-def video_worker(RTSP_URL, is_imshow=False):
+def video_worker(RTSP_URL,viaThread=False,is_imshow=False):
+    global number
     buffer = []
-    q = queue.Queue()
+    background_image = None
     # RTSP_URL = rtsp://<IP>:<PORT>
     cap = cv2.VideoCapture(RTSP_URL)
     # cap.set(cv2.CAP_PROP_BUFFERSIZE, 0)
@@ -80,6 +100,7 @@ def video_worker(RTSP_URL, is_imshow=False):
         if ret is False:
             break
         if frame is not None:
+            background_image = frame
             grayframe = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype('int16')
             buffer.append(grayframe)
             if is_imshow: cv2.imshow('frame', frame)
@@ -87,10 +108,17 @@ def video_worker(RTSP_URL, is_imshow=False):
     cap.release()
     cv2.destroyAllWindows()
     print("len(buffer):", len(buffer))
-    image_process = image_processing(buffer)
-    cv2.imwrite("./static/output.png", image_process)
-    print("image_process shape:",image_process.shape)
-    return buffer
+    if not viaThread: return buffer,background_image
+    
+    process_image = image_processing(buffer)
+    pred = get_predict(process_image)
+    boxes = pred["data"]
+    number = pred["number"]
+    image = get_draw_box_image(background_image,boxes)
+    
+    # cv2.imwrite("./static/process_image.png",process_image)
+    cv2.imwrite("./static/output.png",image)
+    print("predict:",pred)
 
 
 def get_predict(image):
@@ -116,6 +144,7 @@ def get_draw_box_image(image, bounding_box):
                       (0, 255, 0), 2)
     return image
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -126,49 +155,64 @@ def index():
     # render out pre-built HTML file right on the index page
     return render_template("index.html")
 
-
 @app.route('/postRtsp', methods=['POST'])
 def postRtsp():
     """
-    global origin_image , process_image
+    TODO: check processed images compare with postRtsp no Thread.
 
-    #json
-    # rtsp_url = request.json["RTSP_URL"]
-
-    # text
-    rtsp_url = request.json
-
-    buffer = get_buffer(rtsp_url)
-    image = image_processing(buffer)
-    process_image = image
-    origin_image = buffer[3]
-
+    FRONTEND: URL for image is <SERVER_IP>:<PORT>/static/output.png 
+    len(buffer) ~= 214 , max ~=217 , min ~= 210
     """
-    rtsp_url = request.json["endpoint"]
-    worker = Thread(target=video_worker, args=(rtsp_url,False))
-    worker.start()
-    worker.join()
-    print(request.json)
-    # return  jsonify(request.json)
-    res = {'image': 'http://192.168.1.103:5000/static/output.png'}
-    return jsonify(res)
+    if request.method == 'POST':
+        rtsp_url = request.json["endpoint"]
+        worker = Thread(target=video_worker, args=(rtsp_url,True,False))
+        worker.start()
+        worker.join()
+        print(request.json)
 
-#FRONTEND: URL for image is <SERVER_IP>:<PORT>/static/output.png
-@app.route('/getImage', methods=['GET'])
-def getImage():
+        time_now = int(time.time() * 1000)+1
+        image_url = STATIC_PATH+'output.png#'+str(time_now)
+        res = {'image': image_url,'number':number}
+        print("POST response:",res)
+        return jsonify(res)
+
+# @app.route('/postRtsp', methods=['POST'])
+def postRtsp_noThread():
     """
-    pred = get_predict(process_image)
-    boxes = pred["data"]
-    image = get_draw_box_image(origin_image,boxes)
+    TODO: check processed images compare with postRtsp via Thread.
 
-    filename = "output.png"
-    cv2.imwrite("./static/"+filename, image)
-    # encode = base64.b64encode(image)
-    # decode = base64.decodebytes(encode)
-
-    number = pred["number"]
+    FRONTEND: URL for image is <SERVER_IP>:<PORT>/static/output.png 
+    len(buffer) ~= 213-214 , max ~=217, min~=205 
     """
-    data = {"data": "/static/output.png", "number": 2}
+    if request.method == 'POST':
+        global number
+        rtsp_url = request.json["endpoint"]
+        buffer,background_image = video_worker(rtsp_url)
+        process_image = image_processing(buffer)
+
+        # predict
+        pred = get_predict(process_image)
+        boxes = pred["data"]
+        number= pred["number"]
+        image = get_draw_box_image(background_image,boxes)
+
+        # cv2.imwrite("./static/process_image.png",process_image)
+        cv2.imwrite("./static/outputV2.png",image)
+        print("predict:",pred)
+
+        # URI_form,decode_base64 = b64decode("./static/outputV2.png")
+        time_now = int(time.time() * 1000)+1
+        image_url = STATIC_PATH+'outputV2.png#'+str(time_now)
+        res = {'image': image_url,'number':number}
+        print("POST response:",res)
+        return jsonify(res)
+
+@app.route('/getTest', methods=['GET'])
+def getTest():
+    time_now = int(time.time() * 1000)+1
+    data = {"data": "API GET Testting is working !!", 
+    "local_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+    "UTC_time": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())}
     return jsonify(data)
 
 
@@ -193,19 +237,17 @@ def predict():
     imgData = request.get_data()
     # encode it into a suitable format
     convertImage(imgData)
-    print("debug")
     # read the image into memory
     x = cv2.imread('./static/output.png')
-
-    print("debug2")
-    return jsonify({"data": [[1, 1, 1, 1], [2, 2, 2, 2]], "number": 2})
+    # return jsonify({"data": [[1, 1, 1, 1], [2, 2, 2, 2]], "number": 2})
+    return jsonify(get_predict(x))
 
 
 if __name__ == "__main__":
     # decide what port to run the app in
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', PORT))
     # run the app locally on the givn port
-    app.run(host='0.0.0.0', port=port)
+    app.run(host=SERVER_IP, port=port)
 
 # optional if we want to run in debugging mode
 # app.run(debug=True)
