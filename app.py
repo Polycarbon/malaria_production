@@ -207,6 +207,7 @@ def postRtsp_noThread():
         print("POST response:",res)
         return jsonify(res)
 
+
 @app.route('/getTest', methods=['GET'])
 def getTest():
     time_now = int(time.time() * 1000)+1
@@ -224,8 +225,19 @@ def upload_file():
         if f.filename == '': return 'No selected file'
         if f and allowed_file(f.filename):
             filename  = secure_filename(f.filename)
-            f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename ))
-            return 'file uploaded successfully'
+            video_path = os.path.join(app.config['UPLOAD_FOLDER'], filename )
+            f.save(video_path)
+            # return 'file uploaded successfully'
+        
+            worker = Thread(target=video_worker, args=(video_path,True,False))
+            worker.start()
+            worker.join()
+
+            time_now = int(time.time() * 1000)+1
+            image_url = STATIC_PATH+'output.png#'+str(time_now)
+            res = {'image': image_url,'number':number}
+            print("POST response:",res)
+            return jsonify(res)
 
 
 @app.route('/predict/', methods=['GET', 'POST'])

@@ -21,15 +21,6 @@ build/*
 
 .vscode/
 
-
-*.mp4
-
-videos/
-
 .env/
-
-*.h5
-
-static/output.png
 
 *.pyc
