@@ -23,7 +23,7 @@ from threading import Thread
 import numpy as np
 import flask
 from flask import Flask, render_template, request, jsonify, url_for
-from werkzeug import secure_filename
+from werkzeug.utils import secure_filename
 from network.get_ip import get_ip
 
 # scientific computing library for saving, reading, and resizing images
@@ -46,10 +46,11 @@ STATIC_PATH = 'http://'+SERVER_IP+':'+str(PORT)+'/static/'
 
 # global vars for easy reusability
 global model
+global number
 
 # initialize these variables
 model, graph = init()
-
+number = 0
 
 # decoding an image from base64 into raw representation
 def convertImage(imgData1):
@@ -164,6 +165,7 @@ def postRtsp():
     len(buffer) ~= 214 , max ~=217 , min ~= 210
     """
     if request.method == 'POST':
+        global number
         rtsp_url = request.json["endpoint"]
         worker = Thread(target=video_worker, args=(rtsp_url,True,False))
         worker.start()
@@ -220,15 +222,15 @@ def getTest():
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
-        if 'file' not in request.files: return 'No file part'
-        f = request.files['file']
+        if list(request.files.keys())[0] not in request.files: return 'No file part'
+        f = list(request.files.values())[0]
         if f.filename == '': return 'No selected file'
         if f and allowed_file(f.filename):
             filename  = secure_filename(f.filename)
             video_path = os.path.join(app.config['UPLOAD_FOLDER'], filename )
             f.save(video_path)
             # return 'file uploaded successfully'
-        
+
             worker = Thread(target=video_worker, args=(video_path,True,False))
             worker.start()
             worker.join()
