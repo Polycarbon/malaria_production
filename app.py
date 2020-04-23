@@ -2,12 +2,13 @@
 
 # you could also generate a skeleton from scratch via
 # http://flask-appbuilder.readthedocs.io/en/latest/installation.html
-
+import logging
 import base64
 # system level operations (like loading files)
 # for reading operating system data
 import json
 import os , time
+from multiprocessing import Event
 from queue import Queue
 # for matrix math
 # for importing our keras model
@@ -37,9 +38,15 @@ from model.load import *
 
 # PyQt
 from MainWindow import MainWindow
+from PyQt5.QtWidgets import QApplication
+
+logging.basicConfig(format="%(threadName)s:%(message)s")
+logger = logging.getLogger('data flow')
+logger.setLevel(logging.DEBUG)
 
 # initalize our flask app
 app = Flask(__name__)
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 app.config['UPLOAD_FOLDER'] = "./videos"
 ALLOWED_EXTENSIONS = {'mp4',"avi"}
 
@@ -237,7 +244,8 @@ def upload_file():
         if f and allowed_file(f.filename):
             filename  = secure_filename(f.filename)
             video_path = os.path.join(app.config['UPLOAD_FOLDER'], filename )
-            f.save(video_path)
+            if not os.path.exists(video_path):
+                f.save(video_path)
             # return 'file uploaded successfully'
             if False:
                 worker = Thread(target=video_worker, args=(video_path,True,False))
@@ -251,8 +259,11 @@ def upload_file():
                 return jsonify(res)
             
             else:
-                window.openFile(video_path)
+                terminate_event = Event()
+                window.openFile(video_path,terminate_event)
+                terminate_event.wait()
                 log = window.saveFile()
+                # window.closeEvent()
                 print("POST response:",log)
                 res = []
                 for l in log:
@@ -284,10 +295,13 @@ def predict():
     
 
 if __name__ == "__main__":
+
+    _ = QApplication([])
     # decide what port to run the app in
     port = int(os.environ.get('PORT', PORT))
     # run the app locally on the givn port
     app.run(host=SERVER_IP, port=port)
+    
 
 # optional if we want to run in debugging mode
 # app.run(debug=True)

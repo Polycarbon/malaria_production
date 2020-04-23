@@ -36,7 +36,9 @@ class CellDetector(QObject):
         self.mode = PROPER_REGION
         self.flow_list = []
 
-    def initModel(self, path='src/resnet50.h5', backbone='resnet50'):
+        self.initModel()
+
+    def initModel(self, path='model/resnet50v2conf_67.h5', backbone='resnet50'):
         if self.mode == RESNET:
             logger.info('Initialize Model')
             if self.model is None:
@@ -103,6 +105,7 @@ class CellDetector(QObject):
             self.onDetectSuccess.emit(cur_frame_id, area_vec, cells.tolist(), sc)
         
         if self.mode == PROPER_REGION:
+            # logger.info('start detect')   
             image = normframe
             thresh = threshold_yen(image)
             binary = image >= thresh
@@ -126,3 +129,4 @@ class CellDetector(QObject):
             cells, weights = cv2.groupRectangles(cells, 1, 1.0)
             sc = [1.0] * len(cells)
             self.onDetectSuccess.emit(cur_frame_id, area_vec, list(cells), sc)
+            # logger.info('detect finished')   

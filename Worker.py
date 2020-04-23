@@ -7,7 +7,7 @@ import cv2
 from PyQt5.QtCore import QThread, QRect, QRectF, QPointF, Qt, QPoint
 from PyQt5 import QtCore
 from PyQt5.QtGui import QPolygonF
-# from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication
 import numpy as np
 from scipy.spatial.distance import cdist
 
@@ -37,7 +37,6 @@ class PreprocessThread(QThread):
     # onBufferReady = QtCore.pyqtSignal(list, np.ndarray, list)
     onBufferReady = QtCore.pyqtSignal(int, list)
     onFinish = QtCore.pyqtSignal()
-    onUpdateProgress = QtCore.pyqtSignal(int, str)
     onFrameChanged = QtCore.pyqtSignal(list)
 
     def __init__(self, file_name):
@@ -50,7 +49,7 @@ class PreprocessThread(QThread):
         self.wait()
 
     def run(self):
-        # QApplication.processEvents()
+        QApplication.processEvents()
         logger.info('start preprocess video')
         frame_count = VideoInfo.FRAME_COUNT
         window_size = VideoInfo.WINDOW_SIZE
@@ -114,7 +113,7 @@ class PreprocessThread(QThread):
                 # Move to next frame
                 prev_gray = curr_gray
                 buffer.append(prev_gray.astype("int16"))
-                self.onUpdateProgress.emit(frameId + 1, 'preprocess')
+
             self.onFrameChanged.emit([0, 0])
             if len(buffer) >= step_size:
                 self.onBufferReady.emit(frameId, buffer[-window_size:])
@@ -147,7 +146,7 @@ class PreprocessThread(QThread):
                     buffer = []
                 curr_gray = cv2.cvtColor(curr, cv2.COLOR_BGR2GRAY)
                 prev_gray = curr_gray
-                self.onUpdateProgress.emit(frameId + 1, 'preprocess')
+
             self.onFrameChanged.emit(d[0].tolist())
             if len(buffer) >= step_size:
                 self.onBufferReady.emit(frameId, buffer[-window_size:])
@@ -155,7 +154,8 @@ class PreprocessThread(QThread):
 
 
 class ObjectMapper(QThread):
-    onUpdateProgress = QtCore.pyqtSignal(int, str)
+    onfinished = QtCore.pyqtSignal(int)
+
     onUpdateObject = QtCore.pyqtSignal(defaultdict)
     onNewDetectedCells = QtCore.pyqtSignal(int, OrderedDict, int)
 
@@ -185,10 +185,12 @@ class ObjectMapper(QThread):
         self.flow_list.append(d)
 
     def queueOutput(self, *args):
+        print("sadasdsad")
         self.Q.put(args)
         # logger.debug('{}-{} : queue success'.format(args[0] - 50, args[0]))
 
     def run(self):
+        logger.info('start ObjectMapper')
         while True:
             # otherwise, ensure the queue has room in it
             if not self.Q.empty():
@@ -203,7 +205,7 @@ class ObjectMapper(QThread):
                         cells = self.tracker.translated(x, y)
                         self.objectmap[i + 1] = {'area': None, 'cells': cells}
                         # self.objects.update(translated)
-                        self.onUpdateProgress.emit(i + 1, 'objectMapping')
+
                     self.currFrameId = start_id
 
                 if not self.curr_area.containsPoint(self.focus_pt, Qt.OddEvenFill):
@@ -228,12 +230,13 @@ class ObjectMapper(QThread):
                     cells = self.tracker.translated(x, y)
                     self.objectmap[i + 1] = {'area': self.curr_area.united(self.last_area), 'cells': cells}
                     # self.objects.update(translated)
-                    self.onUpdateProgress.emit(i + 1, 'objectMapping')
                 self.currFrameId = end_id
                 self.onUpdateObject.emit(self.objectmap)
-                logger.debug('frames {}-{} ,progress {}/{}'.format(start_id,end_id,end_id, self.frame_count))
-                logger.debug("  cell{} - scores{}".format(str(detected_cells), str(scores)))
+                logger.info('frames {}-{} ,progress {}/{}'.format(start_id,end_id,end_id, self.frame_count))
+                logger.info("  cell{} - scores{}".format(str(detected_cells), str(scores)))
                 if end_id == self.frame_count - 1:
                     self.sleep(1)
-                    return
-            
+                    logger.info('ObjectMapper finished')
+                    # self.onfinish.emit("sdfdsf")
+                    return 
+            # logger.debug('D')

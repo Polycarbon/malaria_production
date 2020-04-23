@@ -1,12 +1,16 @@
 import VideoInfo
+import logging
 from Detector import CellDetector
 import cv2
-import imutils
+import imutils,os
 import numpy as np
 from Worker import PreprocessThread, ObjectMapper
 from mfutils import drawBoxes, getHHMMSSFormat
 from PyQt5.QtCore import QUrl
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtWidgets import QApplication
+from PyQt5 import QtCore
+logger = logging.getLogger('data flow')
 
 class MainWindow():
     def __init__(self):
@@ -37,22 +41,30 @@ class MainWindow():
             # dialog.closed.connect(ppc_worker.quit)
             # dialog.closed.connect(map_worker.quit)
             self.detector.onDetectSuccess.connect(map_worker.queueOutput)
-            map_worker.finished.connect(dialog.close)
+            # map_worker.onfinished.connect(self.on_finished)
             # dialog.onReady2Read.connect(self.setOutput)
             # dialog.show()
             map_worker.start()
             ppc_worker.start()
+    
+    def on_finished(self,isCome=0):
+        self.terminate_event.clear()
+        print('thread finished')
+        
             
     # TODO: USE THIS VIA API UPLOAD
-    def openFile(self,file_name):
+    def openFile(self,file_name,terminate_event):
         # file_name = 
+        self.terminate_event = terminate_event
+        self.terminate_event.set()
         if os.path.exists(file_name):
             self.input_name = file_name
             self.startProcess()        
 
     # write iamge to static output
     def saveFile(self):
-
+        
+        # out = cv2.VideoWriter(self.vid_file_name, fourcc, frate, (fwidth, fheight))
         head, tail = os.path.split(self.input_name)
         out_dir = "static"
         file_prefix = tail.split('.')[0]
@@ -65,9 +77,12 @@ class MainWindow():
             file_name = os.path.join(out_dir, file_prefix + "_" + detect_time + ".png")
             cv2.imwrite(file_name, image)
             self.log[iter]["image_path"] = file_name
-        out.release()
+        # out.release()
         logger.info("save finish")
         return self.log
+    
+    def closeEvent(self, *args, **kwargs):
+        QApplication.closeAllWindows()
         
     
     def updateObject(self, frame_objects):

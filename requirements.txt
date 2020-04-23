@@ -17,3 +17,4 @@ netifaces
 ifaddr
 imutils
 scikit-image
+PyQt5
