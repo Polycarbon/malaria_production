@@ -15,3 +15,5 @@ keras-resnet
 werkzeug
 netifaces
 ifaddr
+imutils
+scikit-image

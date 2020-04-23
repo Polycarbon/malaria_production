@@ -8,6 +8,7 @@ import base64
 # for reading operating system data
 import json
 import os , time
+from queue import Queue
 # for matrix math
 # for importing our keras model
 # for regular expressions, saves time dealing with string data
@@ -18,13 +19,14 @@ import re
 # for you automatically.
 # requests are objects that flask handles (get set post, etc)
 import cv2
+
 from multiprocessing import Process
 from threading import Thread
 import numpy as np
 import flask
 from flask import Flask, render_template, request, jsonify, url_for
 from werkzeug.utils import secure_filename
-from network.get_ip import get_ip
+from lib.get_ip import get_ip
 
 # scientific computing library for saving, reading, and resizing images
 # from scipy.misc import imread, imresize
@@ -33,6 +35,9 @@ from network.get_ip import get_ip
 # sys.path.append(os.path.abspath("./model"))
 from model.load import *
 
+# PyQt
+from MainWindow import MainWindow
+
 # initalize our flask app
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = "./videos"
@@ -40,7 +45,7 @@ ALLOWED_EXTENSIONS = {'mp4',"avi"}
 
 # initalize ip address and path
 # WARNING: should close firewall. 
-SERVER_IP = get_ip(interface='wifi') if get_ip(interface='wifi') is not None else "127.0.0.1"
+SERVER_IP = get_ip(interface='wifi') if get_ip(interface='wifi') is not None else "192.168.1.103"
 PORT = 5000
 STATIC_PATH = 'http://'+SERVER_IP+':'+str(PORT)+'/static/'
 
@@ -51,6 +56,10 @@ global number
 # initialize these variables
 model, graph = init()
 number = 0
+
+#
+window = MainWindow()
+
 
 # decoding an image from base64 into raw representation
 def convertImage(imgData1):
@@ -230,16 +239,33 @@ def upload_file():
             video_path = os.path.join(app.config['UPLOAD_FOLDER'], filename )
             f.save(video_path)
             # return 'file uploaded successfully'
+            if False:
+                worker = Thread(target=video_worker, args=(video_path,True,False))
+                worker.start()
+                worker.join()
 
-            worker = Thread(target=video_worker, args=(video_path,True,False))
-            worker.start()
-            worker.join()
+                time_now = int(time.time() * 1000)+1
+                image_url = STATIC_PATH+'output.png#'+str(time_now)
+                res = {'image': image_url,'number':number}
+                print("POST response:",res)
+                return jsonify(res)
+            
+            else:
+                window.openFile(video_path)
+                log = window.saveFile()
+                print("POST response:",log)
+                res = []
+                for l in log:
+                    detect_time = log['detect_time']
+                    cells = log['cells']
+                    file_name = log["image_path"]
+                    res.append({"image":file_name,"count": cells,"time":detect_time})
+                print("POST response:",res)
+                return jsonify(res)
 
-            time_now = int(time.time() * 1000)+1
-            image_url = STATIC_PATH+'output.png#'+str(time_now)
-            res = {'image': image_url,'number':number}
-            print("POST response:",res)
-            return jsonify(res)
+def psotTestUploadTime():
+    pass
+
 
 
 @app.route('/predict/', methods=['GET', 'POST'])
@@ -255,7 +281,7 @@ def predict():
     x = cv2.imread('./static/output.png')
     # return jsonify({"data": [[1, 1, 1, 1], [2, 2, 2, 2]], "number": 2})
     return jsonify(get_predict(x))
-
+    
 
 if __name__ == "__main__":
     # decide what port to run the app in
