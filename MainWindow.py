@@ -8,12 +8,13 @@ from Worker import PreprocessThread, ObjectMapper
 from mfutils import drawBoxes, getHHMMSSFormat
 from PyQt5.QtCore import QUrl
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QMainWindow,QApplication
 from PyQt5 import QtCore
 logger = logging.getLogger('data flow')
 
-class MainWindow():
+class MainWindow(QMainWindow):
     def __init__(self):
+        QMainWindow.__init__(self)
         self.input_name = None
         self.detector = CellDetector()
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
@@ -56,7 +57,7 @@ class MainWindow():
     def openFile(self,file_name,terminate_event):
         # file_name = 
         self.terminate_event = terminate_event
-        self.terminate_event.set()
+        self.terminate_event.clear()
         if os.path.exists(file_name):
             self.input_name = file_name
             self.startProcess()        

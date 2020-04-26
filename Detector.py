@@ -55,8 +55,8 @@ class CellDetector(QObject):
         else:
             self.mode = PROPER_REGION
 
-    def setObjectMap(self, objectmap):
-        self.objectmap = objectmap
+    # def setObjectMap(self, objectmap):
+    #     self.objectmap = objectmap
 
     def detect(self, cur_frame_id, buffer):
         v_max = 10
@@ -129,4 +129,4 @@ class CellDetector(QObject):
             cells, weights = cv2.groupRectangles(cells, 1, 1.0)
             sc = [1.0] * len(cells)
             self.onDetectSuccess.emit(cur_frame_id, area_vec, list(cells), sc)
-            # logger.info('detect finished')   
+            logger.info('detect finished {} , {}'.format(str(cur_frame_id),len(buffer)))   

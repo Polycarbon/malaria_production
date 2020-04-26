@@ -14,7 +14,7 @@ from queue import Queue
 # for importing our keras model
 # for regular expressions, saves time dealing with string data
 import re
-
+import sys
 # Generating HTML from within Python is not fun, and actually pretty cumbersome because you have to do the
 # HTML escaping on your own to keep the application secure. Because of that Flask configures the Jinja2 template engine
 # for you automatically.
@@ -37,8 +37,8 @@ from lib.get_ip import get_ip
 from model.load import *
 
 # PyQt
-from MainWindow import MainWindow
 from PyQt5.QtWidgets import QApplication
+from MainWindow import MainWindow
 
 logging.basicConfig(format="%(threadName)s:%(message)s")
 logger = logging.getLogger('data flow')
@@ -65,6 +65,7 @@ model, graph = init()
 number = 0
 
 #
+_ = QApplication(sys.argv)
 window = MainWindow()
 
 
@@ -263,8 +264,8 @@ def upload_file():
                 window.openFile(video_path,terminate_event)
                 terminate_event.wait()
                 log = window.saveFile()
-                # window.closeEvent()
-                print("POST response:",log)
+                window.closeEvent()
+                print("LOG response:",log)
                 res = []
                 for l in log:
                     detect_time = log['detect_time']
@@ -292,15 +293,15 @@ def predict():
     x = cv2.imread('./static/output.png')
     # return jsonify({"data": [[1, 1, 1, 1], [2, 2, 2, 2]], "number": 2})
     return jsonify(get_predict(x))
-    
+
+
 
 if __name__ == "__main__":
-
-    _ = QApplication([])
     # decide what port to run the app in
     port = int(os.environ.get('PORT', PORT))
     # run the app locally on the givn port
     app.run(host=SERVER_IP, port=port)
+    # sys.exit(_.exec_())
     
 
 # optional if we want to run in debugging mode

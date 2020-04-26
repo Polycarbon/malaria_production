@@ -150,12 +150,12 @@ class PreprocessThread(QThread):
             self.onFrameChanged.emit(d[0].tolist())
             if len(buffer) >= step_size:
                 self.onBufferReady.emit(frameId, buffer[-window_size:])
+                print('ProcessWorker:',str(frameId),len(buffer[-window_size:]))
         logger.debug('preprocess finished')
 
 
 class ObjectMapper(QThread):
     onfinished = QtCore.pyqtSignal(int)
-
     onUpdateObject = QtCore.pyqtSignal(defaultdict)
     onNewDetectedCells = QtCore.pyqtSignal(int, OrderedDict, int)
 
@@ -182,10 +182,11 @@ class ObjectMapper(QThread):
         self.wait()
 
     def updateOpticalFlow(self, d):
+        logger.info("AAAAA")
         self.flow_list.append(d)
 
     def queueOutput(self, *args):
-        print("sadasdsad")
+        logger.info("sadasdsad")
         self.Q.put(args)
         # logger.debug('{}-{} : queue success'.format(args[0] - 50, args[0]))
 
