@@ -36,14 +36,6 @@ from src.get_ip import get_ip
 # sys.path.append(os.path.abspath("./model"))
 from model.load import *
 
-# PyQt
-from PyQt5.QtWidgets import QApplication
-from MainWindow import MainWindow
-
-logging.basicConfig(format="%(threadName)s:%(message)s")
-logger = logging.getLogger('data flow')
-logger.setLevel(logging.DEBUG)
-
 # initalize our flask app
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
@@ -274,10 +266,6 @@ def upload_file():
                     res.append({"image":file_name,"count": cells,"time":detect_time})
                 print("POST response:",res)
                 return jsonify(res)
-
-def psotTestUploadTime():
-    pass
-
 
 
 @app.route('/predict/', methods=['GET', 'POST'])

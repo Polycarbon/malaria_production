@@ -21,7 +21,7 @@ RESNET = 1
 BLOB = 2
 
 class Detector:
-    def __init__(self,mode = RESNET,manager=None):
+    def __init__(self,mode = PROPER_REGION,manager=None):
         self.Q = manager.Q
         self.mode = mode
         self.model = None
