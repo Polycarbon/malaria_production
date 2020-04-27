@@ -27,7 +27,7 @@ import numpy as np
 import flask
 from flask import Flask, render_template, request, jsonify, url_for
 from werkzeug.utils import secure_filename
-from lib.get_ip import get_ip
+from src.get_ip import get_ip
 
 # scientific computing library for saving, reading, and resizing images
 # from scipy.misc import imread, imresize
@@ -301,7 +301,6 @@ if __name__ == "__main__":
     port = int(os.environ.get('PORT', PORT))
     # run the app locally on the givn port
     app.run(host=SERVER_IP, port=port)
-    # sys.exit(_.exec_())
     
 
 # optional if we want to run in debugging mode

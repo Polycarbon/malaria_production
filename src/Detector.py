@@ -1,4 +1,4 @@
-import logging
+import logging,sys
 
 import cv2
 from PyQt5 import QtCore
@@ -13,8 +13,11 @@ from skimage.morphology import binary_closing, dilation, square, erosion
 
 import VideoInfo
 from LineHandler import extractLines, calculateBoundingPoints, extend_verticals, extend_horizontals
-from keras_retinanet import models
-from keras_retinanet.utils.image import resize_image, preprocess_image
+
+sys.path.append(".")
+from model.load import *
+# from keras_retinanet import models
+# from keras_retinanet.utils.image import resize_image, preprocess_image
 
 logger = logging.getLogger('data flow')
 
@@ -34,15 +37,14 @@ class CellDetector(QObject):
         self.thread.start()
         self.moveToThread(self.thread)
         self.mode = PROPER_REGION
-        self.flow_list = []
-
         self.initModel()
 
     def initModel(self, path='model/resnet50v2conf_67.h5', backbone='resnet50'):
         if self.mode == RESNET:
             logger.info('Initialize Model')
             if self.model is None:
-                self.model = models.load_model(path, backbone_name=backbone)
+                # self.model = models.load_model(path, backbone_name=backbone)
+                self.model,_ =  init()
                 self.onInitModelSuccess.emit()
                 logger.info('Init Model Success')
         else:

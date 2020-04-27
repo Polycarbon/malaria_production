@@ -24,3 +24,5 @@ build/*
 .env/
 
 *.pyc
+
+static/

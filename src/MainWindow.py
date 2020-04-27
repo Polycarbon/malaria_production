@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
             self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.input_name)))
             self.cap = cv2.VideoCapture(self.input_name)
             self.frameCount = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            VideoInfo.init(self.cap)
+            VideoInfo.init_video(self.cap)
             map_worker = ObjectMapper()
             map_worker.onUpdateObject.connect(self.updateObject)
             # map_worker.onUpdateProgress.connect(dialog.updateProgress)
