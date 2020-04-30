@@ -9,31 +9,31 @@ from LineHandler import extractLines, calculateBoundingPoints, extend_verticals,
 from skimage.filters import threshold_yen
 from skimage.measure import label, regionprops
 from skimage.morphology import binary_closing
-
-sys.path.append(".")
 from model.load import *
-# from keras_retinanet.utils.image import resize_image, preprocess_image
+from keras_retinanet.utils.image import resize_image, preprocess_image
 
 log = logging.getLogger('Detector')
+
+global model,graph
 
 PROPER_REGION = 0
 RESNET = 1
 BLOB = 2
-
 class Detector:
-    def __init__(self,mode = PROPER_REGION,manager=None):
+    def __init__(self,manager=None,mode = PROPER_REGION,model=None,graph=None):
         self.Q = manager.Q
         self.mode = mode
-        self.model = None
+        # self.model = model
+        # self.graph = graph
         self.initModel()
     
     def initModel(self, path='model/resnet50v2conf_67.h5', backbone='resnet50'):
         if self.mode == RESNET:
             log.info('Initialize Model')
-            if self.model is None:
+            # if self.model is None:
                 # self.model = models.load_model(path, backbone_name=backbone)
-                self.model,self.graph = init()
-                log.info('Init Model Success')
+                # self.model,self.graph = model,graph
+            log.info('Init Model Success')
         else:
             log.info('no need to initialize Model')
     
@@ -71,8 +71,8 @@ class Detector:
             image = np.stack((normframe,) * 3, axis=-1)
             image = preprocess_image(image)
             image, scale = resize_image(image)
-            with self.graph.as_default():
-                boxes, scores, labels = self.model.predict_on_batch(np.expand_dims(image, axis=0))
+            with graph.as_default():
+                boxes, scores, labels = model.predict_on_batch(np.expand_dims(image, axis=0))
             boxes /= scale
             cells = []
             sc = []

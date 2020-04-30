@@ -2,6 +2,7 @@ import datetime,time
 import os,logging
 from multiprocessing import Process
 from src.Management import Management
+from src.DetectorThread import Detector
 from src.PreprocessorThread import Preprocessor
 from src.ObjectMapperThread import ObjectMapper
 
@@ -10,8 +11,15 @@ from flask import Flask, render_template, request, jsonify, url_for
 from werkzeug.utils import secure_filename
 from src.get_ip import get_ip
 
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger('main')
+from model.load import *
+
+global model,graph
+model,graph = init()
+PROPER_REGION = 0
+RESNET = 1
+
+# logging.basicConfig(level=logging.ERROR)
+log = logging.getLogger('main') 
 
 # initalize our flask app
 app = Flask(__name__)
@@ -21,6 +29,7 @@ ALLOWED_EXTENSIONS = {'mp4',"avi"}
 
 # initalize ip address and path
 # WARNING: should close firewall. 
+log.warning("should close firewall.")
 SERVER_IP = get_ip(interface='wifi') if get_ip(interface='wifi') is not None else "192.168.1.103"
 PORT = 5000
 SERVER_URL = 'http://'+SERVER_IP+':'+str(PORT)
@@ -38,7 +47,7 @@ def get_respone(result_list):
         res_dict["count"] = res.get("count")
         res_dict["time"] = res.get("time")
         return res_dict
-    return {"data":list(map(f,result_list))}
+    return list(map(f,result_list))
 
 @app.route('/getTest', methods=['GET'])
 def getTest():
@@ -66,8 +75,8 @@ def predict_upload():
         # Predict Video
         # video_path = "videos/manual_5-movie-resize.mp4"
         Manager = Management(video_path)
-        
-        ppc_worker = Preprocessor(Manager)
+        detector = Detector(manager=Manager,mode=RESNET,model=model,graph=graph)
+        ppc_worker = Preprocessor(Manager,detector)
         map_worker = ObjectMapper(Manager)
 
         ppc_worker.start()
@@ -79,7 +88,7 @@ def predict_upload():
 
         Manager.saveFile()
         res = get_respone(Manager.get_result())
-        log.info("data respone: {}- head(5):{}".format(len(res["data"]),res["data"][:5]))
+        log.info("data respone: {} - head(5):{}".format(len(res),res[:5]))
         Manager.cap_release()
         return jsonify(res)
 

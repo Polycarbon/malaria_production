@@ -8,12 +8,10 @@ from multiprocessing import Queue, Manager, Process
 import cv2
 import numpy as np
 
-from DetectorThread import Detector
-
 log = logging.getLogger('Preprocessor')
 
 class Preprocessor(Thread):
-    def __init__(self,manager):
+    def __init__(self,manager,detector):
         Thread.__init__(self)
         self.file_name = manager.video_path
         self.fvs = FileVideoStream(self.file_name).start()
@@ -21,8 +19,7 @@ class Preprocessor(Thread):
         
         self.flow_list = manager.flow_list
         self.onBufferReady = manager.onBufferReady
-        
-        self.detector = Detector(manager=manager)
+        self.detector = detector
 
     def run(self):
         log.info('start preprocess video...')
@@ -35,7 +32,7 @@ class Preprocessor(Thread):
         prev = self.fvs.read()
         prev_gray = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
         buffer.append(prev_gray.astype("int16"))
-        
+        #TODO: Check why images bounding missing.
         if not os.path.exists(self.dataFileName):
             d = [(0, 0)]
             tmp = []
@@ -93,10 +90,10 @@ class Preprocessor(Thread):
                 self.onBufferReady.put((frameId, buffer[-window_size:]))
                 self.detector.detectThread(self.onBufferReady)
                 log.debug('last preprocess frame:fid-{} buffer-{}'.format(str(frameId),len(buffer[-window_size:])))
-            else:
-                self.onBufferReady.put((frameId, None))
-                self.detector.detectThread(self.onBufferReady)
-                log.debug('last preprocess frame:fid-{} buffer-{}'.format(str(frameId),"None"))
+            # else:
+            #     self.onBufferReady.put((frameId, None))
+            #     self.detector.detectThread(self.onBufferReady)
+            #     log.debug('last preprocess frame:fid-{} buffer-{}'.format(str(frameId),"None"))
             d = np.array(d)
             np.save(self.dataFileName, d)
         else:

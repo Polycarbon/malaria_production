@@ -26,3 +26,5 @@ build/*
 *.pyc
 
 static/
+
+*.mp4

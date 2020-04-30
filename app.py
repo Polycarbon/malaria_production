@@ -168,8 +168,6 @@ def index():
 @app.route('/postRtsp', methods=['POST'])
 def postRtsp():
     """
-    TODO: check processed images compare with postRtsp no Thread.
-
     FRONTEND: URL for image is <SERVER_IP>:<PORT>/static/output.png 
     len(buffer) ~= 214 , max ~=217 , min ~= 210
     """
@@ -190,8 +188,6 @@ def postRtsp():
 # @app.route('/postRtsp', methods=['POST'])
 def postRtsp_noThread():
     """
-    TODO: check processed images compare with postRtsp via Thread.
-
     FRONTEND: URL for image is <SERVER_IP>:<PORT>/static/output.png 
     len(buffer) ~= 213-214 , max ~=217, min~=205 
     """
