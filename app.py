@@ -55,7 +55,12 @@ global number
 # initialize these variables
 model, graph = init()
 number = 0
-
+response = [
+    {"image": STATIC_PATH+"manual_1_00-00.png", "count": 3},
+    {"image": STATIC_PATH+"manual_1_01-31.png", "count": 1},
+    {"image": STATIC_PATH+"manual_1_02-57.png", "count": 1},
+    {"image": STATIC_PATH+"manual_5_00-35.png", "count": 4}
+]
 #
 _ = QApplication(sys.argv)
 window = MainWindow()
