@@ -138,9 +138,14 @@ class ObjectTracker():
 
     def countInArea(self, area):
         new_count = 0
+        in_area_cells = OrderedDict()
+        i = 0
         for cell in self.__cells.values():
-            if area.containsPoint(cell.center(), Qt.OddEvenFill) and not cell.isCounted():
-                cell.count(self.countId)
-                self.countId += 1
-                new_count += 1
-        return new_count
+            if area.containsPoint(cell.center(), Qt.OddEvenFill):
+                if not cell.isCounted():
+                    cell.count(self.countId)
+                    self.countId += 1
+                    new_count += 1
+                in_area_cells[i] = cell
+                i+=1
+        return new_count, in_area_cells

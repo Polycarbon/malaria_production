@@ -55,11 +55,11 @@ class ObjectMapper(Thread):
                 self.curr_area = QPolygonF(area_vec)
                 detected_cells = [CellRect(*cell) for cell in detected_cells]
                 new_count = self.tracker.update(detected_cells)
-                new_count = self.tracker.countInArea(self.curr_area.united(self.last_area))
+                new_count, in_area_cells = self.tracker.countInArea(self.curr_area)
                 cells = self.tracker.getObjects()
                 
                 if new_count > 0:
-                    self.updateDetectLog(self.currFrameId, self.curr_area, cells, new_count)
+                    self.updateDetectLog(self.currFrameId, self.curr_area, in_area_cells, new_count)
                 # new and last conflict
                 for i in range(self.currFrameId, end_id):
                     x, y = self.flow_list[i]
