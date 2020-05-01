@@ -59,7 +59,7 @@ class ObjectMapper(Thread):
                 cells = self.tracker.getObjects()
                 
                 if new_count > 0:
-                    self.updateDetectLog(self.currFrameId, cells, new_count)
+                    self.updateDetectLog(self.currFrameId, self.curr_area, cells, new_count)
                 # new and last conflict
                 for i in range(self.currFrameId, end_id):
                     x, y = self.flow_list[i]

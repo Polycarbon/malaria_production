@@ -45,11 +45,6 @@ class Detector:
         global model,graph
         v_max = 10
         v_min = 1
-        # flow_list = np.array(self.flow_list[cur_frame_id - 50:cur_frame_id]).transpose()
-        # move_distances = np.sum(np.sqrt(flow_list[0] ** 2 + flow_list[1] ** 2))
-        # if move_distances > 5:
-        #     self.Q.put((cur_frame_id,[], [], []))
-        #     return
         verticals, horizontals = extractLines(buffer[0], threshold=0.66)
         shape = buffer[0].shape
         center = (int(shape[1] / 2), int(shape[0] / 2))

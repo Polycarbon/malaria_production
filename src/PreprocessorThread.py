@@ -26,7 +26,7 @@ class Preprocessor(Thread):
         frame_count = VideoInfo.FRAME_COUNT
         window_size = VideoInfo.WINDOW_SIZE
         step_size = VideoInfo.STEP_SIZE
-        move_thres = 0.5
+        move_thres = 0.2
         buffer = []
         
         prev = self.fvs.read()
