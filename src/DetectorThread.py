@@ -9,12 +9,10 @@ from LineHandler import extractLines, calculateBoundingPoints, extend_verticals,
 from skimage.filters import threshold_yen
 from skimage.measure import label, regionprops
 from skimage.morphology import binary_closing
-from model.load import *
+# from model.load import *
 from keras_retinanet.utils.image import resize_image, preprocess_image
 
 log = logging.getLogger('Detector')
-
-global model,graph
 
 PROPER_REGION = 0
 RESNET = 1
@@ -44,6 +42,7 @@ class Detector:
             t.start()
     
     def detect(self,cur_frame_id, buffer):
+        global model,graph
         v_max = 10
         v_min = 1
         # flow_list = np.array(self.flow_list[cur_frame_id - 50:cur_frame_id]).transpose()

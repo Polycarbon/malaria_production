@@ -1,6 +1,6 @@
 from multiprocessing import Manager , Value
 from ctypes import c_int , c_bool
-import os,cv2,sys,shutil
+import os,cv2,sys,shutil,time
 import logging
 
 sys.path.append("src/")
@@ -9,13 +9,18 @@ from mfutils import drawBoxes, getHHMMSSFormat
 
 log = logging.getLogger('Management')
 class Management:
-    def __init__(self,video_path="",manager=None):
-        self.manager = Manager()
+
+    def __init__(self,manager=Manager):
+        self.manager = manager()
+        self.isfinish = Value(c_bool,False,lock=True)
+
+    def init(self,video_path="",manager=None):
         self.video_path = video_path
         self.Q = self.manager.Queue()
         self.flow_list = self.manager.list()
         self.onBufferReady = self.manager.Queue()
-        
+        self.isfinish.value = False
+
         self.result = self.manager.list()
         self.sum_cells = Value(c_int,0,lock=True)
 
@@ -79,7 +84,22 @@ class Management:
     def cap_release(self):
         self.cap.release()
     
+    def test_set_finish(self,seconds=30):
+        print("wait {} seconds...".format(seconds))
+        time.sleep(seconds)
+        self.isfinish.value = True 
+        print("Finish !!")
+    
+    def set_finish(self,isfinish=False):
+        self.isfinish.value = isfinish
+        print("Set isFisnish:",self.isfinish.value)
 
+    def get_finish(self):
+        print("isFisnish:",self.isfinish.value)
+        return self.isfinish.value
+    
+
+# currFrameId / frame_count # inObjectMapper
 
 
 # if __name__ == "__main__":

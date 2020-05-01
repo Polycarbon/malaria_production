@@ -20,6 +20,7 @@ class ObjectMapper(Thread):
         self.curr_area = QPolygonF()
         self.currFrameId = 0
         self.Q = manager.Q
+        self.set_finish = manager.set_finish
         self.updateDetectLog = manager.updateDetectLog
         self.tracker = ObjectTracker()
         self.flow_list = manager.flow_list
@@ -71,5 +72,6 @@ class ObjectMapper(Thread):
                 if end_id == self.frame_count - 1:
                     time.sleep(1)
                     log.info('ObjectMapper finished')
+                    self.set_finish(True)
                     return 
             # log.debug('D')
