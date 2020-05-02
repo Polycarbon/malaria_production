@@ -34,25 +34,24 @@ class Management:
     
     def updateDetectLog(self, detected_frame_id, area_points, cell_map, cell_count):
         # append log
-        # widget = QCustomQWidget()
         self.sum_cells.value += cell_count
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, detected_frame_id+20)
         _, image = self.cap.read()
         _, min_, sec = getHHMMSSFormat(self.duration / self.frameCount * (detected_frame_id+20) * 1000)
         time_text = '{:02}-{:02}'.format(min_, sec)
         cell_map_list = list(map(lambda cell : cell.getCoords(),cell_map.values()))
+        
         # draw counting area
         for i in range(area_points.size()-1):
             p1 = area_points.at(i)
             p2 = area_points.at(i+1)
-            cv2.line(image,(int(p1.x()), int(p1.y())),(int(p2.x()), int(p2.y())),(0, 0, 255))
-        # drawBoxes(image, {1:count_area}, (0, 0, 255))
-        drawBoxes(image, cell_map_list, (0, 255, 0))
-        plt.imshow(image)
-        plt.show()
+            cv2.line(image,(int(p1.x()), int(p1.y())),(int(p2.x()), int(p2.y())),(255, 0, 0),2)
+        
+        # draw parasite cells
+        drawBoxes(image, cell_map_list, (0,255, 0))
+
         self.result.append({"image": image.copy(), "detect_time": time_text,"cells": cell_map_list,"count":cell_count})
         log.debug("result:{}".format(len(self.result)))
-        # drawBoxes(image, cell_map, (0, 255, 0))
     
     def saveFile(self,dir_path="static/output"):
         log.info("start image saving...")
@@ -69,10 +68,7 @@ class Management:
             detect_time = l['detect_time']
             cells = l['cells']
             count = l["count"]
-            # TODO: draw counting area in image
-            # TODO: cells in different Color
-            ## if cell.isCounted():
-            drawBoxes(image, cells, (0, 255, 0))
+            # drawBoxes(image, cells, (0, 255, 0))
             file_name = "/".join([dir_path, file_prefix + "_" + detect_time + ".png"])
             cv2.imwrite(file_name, image)
             l.update({"image_path":file_name})
@@ -107,7 +103,7 @@ class Management:
         print("Set isFisnish:",self.isfinish.value)
 
     def get_finish(self):
-        print("isFisnish:",self.isfinish.value)
+        log.debug("isFisnish:",self.isfinish.value)
         return self.isfinish.value
     
 

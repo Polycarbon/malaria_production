@@ -17,7 +17,7 @@ from model.load import init
 PROPER_REGION = 0
 RESNET = 1
 
-# logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("main")
 
 # initalize our flask app
@@ -98,7 +98,7 @@ def getTest():
     
     return jsonify(DEMO_RESULT)
 
-@app.route("/upload", methods=["GET", "POST"])
+# @app.route("/upload", methods=["GET", "POST"])
 def demo_upload():
     if request.method == "POST":
         # Upload files from Client
@@ -127,7 +127,7 @@ def demo_upload():
             return jsonify({"status":STATUS[0]})
                 
 
-# @app.route("/upload", methods=["GET", "POST"])
+@app.route("/upload", methods=["GET", "POST"])
 def predict_upload():
     if request.method == "POST":
         # Upload files from Client

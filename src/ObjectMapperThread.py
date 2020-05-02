@@ -26,8 +26,7 @@ class ObjectMapper(Thread):
         self.flow_list = manager.flow_list
         self.focus_pt = QPointF(VideoInfo.FRAME_WIDTH / 2, VideoInfo.FRAME_HEIGHT / 2)
     
-    # TODO fix bounding Only in Grid.
-    #      updateDetectLog follow by grid per image not time_to_found per image.  
+    #TODO: updateDetectLog follow by grid per image not time_to_found per image.  
     def run(self):
         log.info('start ObjectMapper...')
         while True:

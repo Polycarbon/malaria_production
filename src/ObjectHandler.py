@@ -119,7 +119,7 @@ class ObjectTracker():
             # else:
             new_object += len(unused_cols)
             for col in unused_cols:
-                print(rects[col])
+                # print(rects[col])
                 self.__register(rects[col])
 
         # return the set of trackable objects
