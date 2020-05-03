@@ -42,14 +42,22 @@ class Management:
         cell_map_list = list(map(lambda cell : cell.getCoords(),cell_map.values()))
         
         # draw counting area
-        for i in range(area_points.size()-1):
-            p1 = area_points.at(i)
-            p2 = area_points.at(i+1)
-            cv2.line(image,(int(p1.x()), int(p1.y())),(int(p2.x()), int(p2.y())),(255, 0, 0),2)
+        # for i in range(area_points.size()-1):
+        #     p1 = area_points.at(i)
+        #     p2 = area_points.at(i+1)
+        #     cv2.line(image,(int(p1.x()), int(p1.y())),(int(p2.x()), int(p2.y())),(255, 0, 0),2)
         
         # draw parasite cells
         drawBoxes(image, cell_map_list, (0,255, 0))
 
+        """ 
+        concept
+        check areapoint is equal and flow_list ?
+        check cells in area if new cells -> append it
+
+        """
+
+        #  append in result list 
         self.result.append({"image": image.copy(), "detect_time": time_text,"cells": cell_map_list,"count":cell_count})
         log.debug("result:{}".format(len(self.result)))
     

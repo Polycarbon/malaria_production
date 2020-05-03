@@ -4,7 +4,7 @@ from PyQt5.QtCore import QRectF, Qt
 from scipy.spatial.distance import cdist
 import numpy as np
 
-
+#TODO: result_image per grid 
 class CellRect(QRectF):
 
     def __init__(self, *__args, score=None, isCount=False, count_id=None):
@@ -12,6 +12,7 @@ class CellRect(QRectF):
         self.score = score
         self.__isCounted = isCount
         self.__count_id = count_id
+        # self.__isInArea = False
 
     def getScore(self):
         return self.score
@@ -136,6 +137,7 @@ class ObjectTracker():
     def getObjects(self):
         return self.__cells.copy()
 
+    # TODO: result_image per grid 
     def countInArea(self, area):
         new_count = 0
         in_area_cells = OrderedDict()
