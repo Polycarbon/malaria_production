@@ -17,7 +17,7 @@ from model.load import init
 PROPER_REGION = 0
 RESNET = 1
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("main")
 
 # initalize our flask app
@@ -117,14 +117,19 @@ def demo_upload():
             print(" file uploaded successfully ")
             isFinish = manager.get_finish()
             if isFinish: return jsonify(DEMO_RESULT)
-            else: return jsonify({"status":STATUS[0]})
+            else: 
+                progress = manager.get_progress()
+                log.info("Progress: {}%".format(progress))
+                return jsonify({"status":STATUS[0],"progress":progress})
                 
     if request.method == "GET":
         isFinish = manager.get_finish()
         if isFinish:
             return jsonify(DEMO_RESULT)
         else: 
-            return jsonify({"status":STATUS[0]})
+            progress = manager.get_progress()
+            log.info("Progress: {}%".format(progress))
+            return jsonify({"status":STATUS[0],"progress":progress})
                 
 
 @app.route("/upload", methods=["GET", "POST"])
@@ -167,7 +172,9 @@ def predict_upload():
             manager.cap_release()
             return jsonify(res)
         else:
-            return jsonify({"status":STATUS[0]})
+            progress = manager.get_progress() 
+            log.info("Progress: {}%".format(progress))
+            return jsonify({"status":STATUS[0],"progress":progress})
 
     if request.method == "GET":
         isFinish = manager.get_finish()
@@ -177,8 +184,10 @@ def predict_upload():
             log.info("data respone: {} - head(5):{}".format(len(res["data"]), res["data"][:5]))
             manager.cap_release()
             return jsonify(res)
-        else: 
-            return jsonify({"status":STATUS[0]})
+        else:
+            progress = manager.get_progress() 
+            log.info("Progress: {}%".format(progress))
+            return jsonify({"status":STATUS[0],"progress":progress})
 
 if __name__ == "__main__":
     manager = Management()

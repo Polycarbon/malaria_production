@@ -21,10 +21,12 @@ class ObjectMapper(Thread):
         self.currFrameId = 0
         self.Q = manager.Q
         self.set_finish = manager.set_finish
-        self.updateDetectLog = manager.updateDetectLog
         self.tracker = ObjectTracker()
         self.flow_list = manager.flow_list
         self.focus_pt = QPointF(VideoInfo.FRAME_WIDTH / 2, VideoInfo.FRAME_HEIGHT / 2)
+
+        self.updateDetectLog = manager.updateDetectLog
+        self.onUpdateProgress = manager.onUpdateProgress
     
     #TODO: updateDetectLog follow by grid per image not time_to_found per image.  
     def run(self):
@@ -68,9 +70,11 @@ class ObjectMapper(Thread):
                 self.currFrameId = end_id
                 log.debug('frames {}-{} ,progress {}/{}'.format(start_id,end_id,end_id, self.frame_count))
                 log.debug("  cell{} - scores{}".format(str(detected_cells), str(scores)))
+                
+                self.onUpdateProgress(self.currFrameId)
+                
                 if end_id == self.frame_count - 1:
                     time.sleep(1)
                     log.info('ObjectMapper finished')
                     self.set_finish(True)
                     return 
-            # log.debug('D')

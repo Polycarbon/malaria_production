@@ -26,6 +26,8 @@ class Management:
 
         self.respone = list()
 
+        self.progress = 0
+
         if os.path.exists(self.video_path):
             self.cap = cv2.VideoCapture(video_path)
             VideoInfo.init_video(self.cap)
@@ -101,8 +103,10 @@ class Management:
         self.cap.release()
     
     def test_set_finish(self,seconds=30):
+        self.progress = 60
         print("wait {} seconds...".format(seconds))
         time.sleep(seconds)
+        self.progress = 100
         self.isfinish.value = True 
         print("Finish !!")
     
@@ -111,11 +115,15 @@ class Management:
         print("Set isFisnish:",self.isfinish.value)
 
     def get_finish(self):
-        log.debug("isFisnish:",self.isfinish.value)
+        log.debug("isFisnish:{}".format(self.isfinish.value))
         return self.isfinish.value
     
-
-# currFrameId / frame_count # inObjectMapper
+    def onUpdateProgress(self,currFrameId):
+        self.progress = int(currFrameId / (self.frameCount-1) *100)
+        log.debug("Progress({}/{}):{}%".format(currFrameId,self.frameCount-1,self.progress))
+    
+    def get_progress(self):
+        return self.progress
 
 
 # if __name__ == "__main__":
