@@ -3,6 +3,7 @@ from threading import Thread
 from ctypes import c_int, c_bool
 import os, cv2, sys, shutil, time
 import imageio
+from pygifsicle import optimize
 import logging
 
 sys.path.append("src/")
@@ -90,7 +91,10 @@ class Management:
         log.debug("result:{}".format(len(self.result)))
 
     def save_gif(self, gif_name, buffer):
-        thread = Thread(target=imageio.mimwrite, args=(gif_name, buffer))
+        def f(gif_name, buffer):
+            imageio.mimwrite(gif_name, buffer)
+            optimize(gif_name)
+        thread = Thread(target=f, args=(gif_name, buffer))
         thread.start()
 
     def saveFile(self, dir_path="static/output"):
