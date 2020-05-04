@@ -1,42 +1,50 @@
+import sys
 from collections import OrderedDict
 
-from PyQt5.QtCore import QRectF, Qt
+from PyQt5.QtCore import QRectF, Qt, QRect
 from scipy.spatial.distance import cdist
 import numpy as np
 
-#TODO: result_image per grid 
+# TODO: result_image per grid
+sys.path.append("src/")
+import VideoInfo
+
+
 class CellRect(QRectF):
 
-    def __init__(self, *__args, score=None, isCount=False, count_id=None):
+    def __init__(self, *__args, score=None, isCount=False, count_id=None, isNew=None, isInArea=None):
         QRectF.__init__(self, *__args)
         self.score = score
-        self.__isCounted = isCount
-        self.__count_id = count_id
-        # self.__isInArea = False
+        self.isCounted = isCount
+        self.count_id = count_id
+        self.isNew = isNew
+        self.isInArea = isInArea
 
     def getScore(self):
         return self.score
 
     def isCounted(self):
-        return self.__isCounted
+        return self.isCounted
 
     def count(self, id):
-        self.__isCounted = True
-        self.__count_id = id
+        self.isCounted = True
+        self.isNew = True
+        self.count_id = id
 
     def getCountId(self):
-        assert self.__count_id is not None
-        return self.__count_id
+        assert self.count_id is not None
+        return self.count_id
 
     def centroid(self):
         return self.center().x(), self.center().y()
 
     def translated(self, *__args):
         translate = super().translated(*__args)
-        return CellRect(translate, score=self.score, isCount=self.__isCounted, count_id=self.__count_id)
+        return CellRect(translate, score=self.score, isCount=self.isCounted, count_id=self.count_id,
+                        isNew=self.isNew, isInArea=self.isInArea)
 
 
-class ObjectTracker():
+class ObjectTracker:
     def __init__(self):
         self.__cells = OrderedDict()
         self.__disappeared = OrderedDict()
@@ -140,14 +148,20 @@ class ObjectTracker():
     # TODO: result_image per grid 
     def countInArea(self, area):
         new_count = 0
-        in_area_cells = OrderedDict()
+        frame_area = QRectF(0, 0, VideoInfo.FRAME_WIDTH, VideoInfo.FRAME_HEIGHT)
+        in_frame_cells = OrderedDict()
         i = 0
         for cell in self.__cells.values():
-            if area.containsPoint(cell.center(), Qt.OddEvenFill):
-                if not cell.isCounted():
-                    cell.count(self.countId)
-                    self.countId += 1
-                    new_count += 1
-                in_area_cells[i] = cell
-                i+=1
-        return new_count, in_area_cells
+            if frame_area.contains(cell.center()):
+                if area.containsPoint(cell.center(), Qt.OddEvenFill):
+                    if not cell.isCounted:
+                        cell.count(self.countId)
+                        self.countId += 1
+                        new_count += 1
+                    else:
+                        cell.isNew = False
+                    cell.isInArea = True
+                in_frame_cells[i] = cell
+                i += 1
+
+        return new_count, in_frame_cells

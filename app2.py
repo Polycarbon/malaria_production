@@ -189,6 +189,8 @@ def predict_upload():
             log.info("Progress: {}%".format(progress))
             return jsonify({"status":STATUS[0],"progress":progress})
 
+    # TODO Handle Interrupt signal from client
+
 if __name__ == "__main__":
     manager = Management()
     model, graph = None,None #init()

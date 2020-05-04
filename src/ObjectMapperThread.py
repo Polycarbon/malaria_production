@@ -24,7 +24,7 @@ class ObjectMapper(Thread):
         self.tracker = ObjectTracker()
         self.flow_list = manager.flow_list
         self.focus_pt = QPointF(VideoInfo.FRAME_WIDTH / 2, VideoInfo.FRAME_HEIGHT / 2)
-
+        self.curr_area_id = 0
         self.updateDetectLog = manager.updateDetectLog
         self.onUpdateProgress = manager.onUpdateProgress
     
@@ -49,6 +49,7 @@ class ObjectMapper(Thread):
 
                 if not self.curr_area.containsPoint(self.focus_pt, Qt.OddEvenFill):
                     self.last_area = self.curr_area
+                    self.curr_area_id += 1
                     self.curr_area = QPolygonF(area_vec)
                 else:
                     self.curr_area = QPolygonF(area_vec)
@@ -58,15 +59,19 @@ class ObjectMapper(Thread):
                 new_count = self.tracker.update(detected_cells)
                 new_count, in_area_cells = self.tracker.countInArea(self.curr_area)
                 cells = self.tracker.getObjects()
-                
-                if new_count > 0:
-                    self.updateDetectLog(self.currFrameId, self.curr_area, in_area_cells, new_count)
+
                 # new and last conflict
+                objects = {}
                 for i in range(self.currFrameId, end_id):
                     x, y = self.flow_list[i]
-                    # self.curr_area.translate(x, y)
+                    self.curr_area.translate(x, y)
+                    translated = dict([(k, cell.translated(x, y)) for k, cell in in_area_cells.items()])
+                    in_area_cells.update(translated)
+                    objects[i] = {'area': QPolygonF(self.curr_area), 'cells': translated}
                     cells = self.tracker.translated(x, y)
                     # self.objects.update(translated)
+                if new_count > 0:
+                    self.updateDetectLog(self.currFrameId, self.curr_area, self.curr_area_id, in_area_cells, new_count, objects)
                 self.currFrameId = end_id
                 log.debug('frames {}-{} ,progress {}/{}'.format(start_id,end_id,end_id, self.frame_count))
                 log.debug("  cell{} - scores{}".format(str(detected_cells), str(scores)))
