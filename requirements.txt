@@ -9,7 +9,7 @@ h5py
 matplotlib
 numpy>=1.14
 opencv-python>=3.3.0
-tensorflow==1.14
+tensorflow
 scipy==1.1.0
 keras-resnet
 werkzeug

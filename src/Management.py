@@ -1,6 +1,8 @@
 from multiprocessing import Manager , Value
+from threading import Thread
 from ctypes import c_int , c_bool
 import os,cv2,sys,shutil,time
+import imageio
 import logging
 
 sys.path.append("src/")
@@ -10,9 +12,11 @@ import matplotlib.pyplot as plt
 log = logging.getLogger('Management')
 class Management:
 
-    def __init__(self,manager=Manager):
+    def __init__(self,manager=Manager,output_path="static/output"):
         self.manager = manager()
         self.isfinish = Value(c_bool,False,lock=True)
+        self.output_path = output_path
+        self.gif_path = "/".join([output_path,"GIFs"])
 
     def init(self,video_path="",manager=None):
         self.video_path = video_path
@@ -33,63 +37,93 @@ class Management:
             VideoInfo.init_video(self.cap)
             self.frameCount = VideoInfo.FRAME_COUNT
             self.duration = VideoInfo.DURATION
+        
+        # clear folder output
+        if os.path.exists(self.output_path):
+            shutil.rmtree(self.output_path, ignore_errors=True)
+        os.mkdir(self.output_path)
+        os.mkdir(self.gif_path)
     
     def updateDetectLog(self, detected_frame_id, area_points, cell_map, cell_count):
         # append log
         self.sum_cells.value += cell_count
-        self.cap.set(cv2.CAP_PROP_POS_FRAMES, detected_frame_id+20)
-        _, image = self.cap.read()
         _, min_, sec = getHHMMSSFormat(self.duration / self.frameCount * (detected_frame_id+20) * 1000)
         time_text = '{:02}-{:02}'.format(min_, sec)
         cell_map_list = list(map(lambda cell : cell.getCoords(),cell_map.values()))
+        buffer=[]
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, detected_frame_id)
+        for i in range(50):
+            _, image = self.cap.read()
         
-        # draw counting area
-        # for i in range(area_points.size()-1):
-        #     p1 = area_points.at(i)
-        #     p2 = area_points.at(i+1)
-        #     cv2.line(image,(int(p1.x()), int(p1.y())),(int(p2.x()), int(p2.y())),(255, 0, 0),2)
-        
-        # draw parasite cells
-        drawBoxes(image, cell_map_list, (0,255, 0))
+            # draw counting area
+            # for i in range(area_points.size()-1):
+            #     p1 = area_points.at(i)
+            #     p2 = area_points.at(i+1)
+            #     cv2.line(image,(int(p1.x()), int(p1.y())),(int(p2.x()), int(p2.y())),(255, 0, 0),2)
+            
+            # draw parasite cells
+            drawBoxes(image, cell_map_list, (0,255, 0))
+            RGB_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            buffer.append(RGB_image)
 
         """ 
-        concept
-        check areapoint is equal and flow_list ?
-        check cells in area if new cells -> append it
-
+        Concept
+        A)  check areapoint is equal and flow_list ?
+            check cells in area if new cells -> append it
+        B)  append GridID
         """
 
+        # save GIF if saveFile is `Slow`
+        # head, tail = os.path.split(self.video_path)
+        # file_prefix = tail.split('.')[0]
+        # gif_name = "/".join([self.gif_path, file_prefix + "_" + detect_time + ".gif"])
+        # self.save_gif(gif_name,buffer)
+
         #  append in result list 
-        self.result.append({"image": image.copy(), "detect_time": time_text,"cells": cell_map_list,"count":cell_count})
+        self.result.append({"image": buffer[20].copy(),"buffer":buffer.copy(),"detect_time": time_text,"cells": cell_map_list,"count":cell_count})
         log.debug("result:{}".format(len(self.result)))
+    
+    def save_gif(self,gif_name,buffer):
+        thread = Thread(target=imageio.mimwrite,args=(gif_name,buffer))
+        thread.start()
     
     def saveFile(self,dir_path="static/output"):
         log.info("start image saving...")
         # out = cv2.VideoWriter(self.vid_file_name, fourcc, frate, (fwidth, fheight))
-        if os.path.exists(dir_path):
-            shutil.rmtree(dir_path, ignore_errors=True)
-        os.mkdir(dir_path)
-        
+        gif_path = "/".join([dir_path,"GIFs"])
+        # if os.path.exists(dir_path):
+        #     shutil.rmtree(dir_path, ignore_errors=True)
+        # os.mkdir(dir_path)
+        # os.mkdir(gif_path)
+
         head, tail = os.path.split(self.video_path)
         file_prefix = tail.split('.')[0]
         self.respone = []
         for iter,l in enumerate(self.result):
             image = l['image']
+            buffer = l["buffer"]
             detect_time = l['detect_time']
             cells = l['cells']
             count = l["count"]
             # drawBoxes(image, cells, (0, 255, 0))
-            file_name = "/".join([dir_path, file_prefix + "_" + detect_time + ".png"])
-            cv2.imwrite(file_name, image)
-            l.update({"image_path":file_name})
+
+            # save image
+            # file_name = "/".join([dir_path, file_prefix + "_" + detect_time + ".png"])
+            # cv2.imwrite(file_name, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            # l.update({"image_path":file_name})
             
-            self.respone.append({'image':file_name,"time":detect_time,"count":count})
+            # save GIF
+            gif_name = "/".join([gif_path, file_prefix + "_" + detect_time + ".gif"])
+            self.save_gif(gif_name,buffer)
+            l.update({"gif_path":gif_name})
+            
+            self.respone.append({'gif':gif_name,"time":detect_time,"count":count})
 
         log.info("save finish.")
     
     def get_result(self,keys=None):
         """ 
-        keys list have 3 key: "image" , "time" , "count".
+        keys list have 4 key: "image" ,"gif", "time" , "count".
         """
         if not keys or keys is None: return self.respone.copy()
         else:

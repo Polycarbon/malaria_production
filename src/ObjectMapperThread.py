@@ -77,4 +77,4 @@ class ObjectMapper(Thread):
                     time.sleep(1)
                     log.info('ObjectMapper finished')
                     self.set_finish(True)
-                    return 
+                    return

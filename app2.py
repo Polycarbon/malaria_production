@@ -39,9 +39,6 @@ SERVER_URL = "http://" + SERVER_IP + ":" + str(PORT)
 STATIC_PATH = SERVER_URL + "/static/"
 
 STATUS =["onWorking","Finished"]
-#  "Finished"         
-# "onWorking"         
-# {"status": "Finished", "data": []}
 
 # Change demo result 
 DEMO_RESULT = {
@@ -78,8 +75,11 @@ def get_respone(result_list):
         time_now = int(time.time() * 1000) + 1
 
         res_dict["image"] = "/".join(
-            [SERVER_URL, res.get("image") + "#" + str(time_now)]
+            [SERVER_URL, res.get("gif") + "#" + str(time_now)]
         )
+        # res_dict["gif"] = "/".join(
+        #     [SERVER_URL, res.get("gif") + "#" + str(time_now)]
+        # )
         res_dict["count"] = res.get("count")
         res_dict["time"] = res.get("time")
         return res_dict
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     # decide what port to run the app in
     port = int(os.environ.get("PORT", PORT))
     # run the app locally on the givn port
-    app.run(host=SERVER_IP, port=port)
+    app.run(host=SERVER_IP, port=port,debug=True)
 
     
 
