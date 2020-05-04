@@ -8,7 +8,7 @@ import logging
 sys.path.append("src/")
 import VideoInfo
 from mfutils import drawBoxes, getHHMMSSFormat
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 log = logging.getLogger('Management')
 
@@ -17,9 +17,9 @@ class Management:
 
     def __init__(self, manager=Manager, output_path="static/output"):
         self.manager = manager()
+        self.progress = 0
         self.isfinish = Value(c_bool, False, lock=True)
         self.output_path = output_path
-        self.gif_path = "/".join([output_path, "GIFs"])
 
     def init(self, video_path="", manager=None):
         self.video_path = video_path
@@ -40,11 +40,13 @@ class Management:
             self.frameCount = VideoInfo.FRAME_COUNT
             self.duration = VideoInfo.DURATION
 
+            head, tail = os.path.split(self.video_path)
+            self.file_prefix = tail.split('.')[0]
+
         # clear folder output
         if os.path.exists(self.output_path):
             shutil.rmtree(self.output_path, ignore_errors=True)
         os.mkdir(self.output_path)
-        os.mkdir(self.gif_path)
 
     #TODO optimize parameter
     def updateDetectLog(self, detected_frame_id, area_points, curr_area_id, cell_map, cell_count, objects):
@@ -70,8 +72,6 @@ class Management:
             RGB_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             buffer.append(RGB_image)
 
-        # plt.imshow(image)
-        # plt.show()
         """ 
         Concept
         A)  check areapoint is equal and flow_list ?
@@ -80,14 +80,12 @@ class Management:
         """
 
         # save GIF if saveFile is `Slow`
-        # head, tail = os.path.split(self.video_path)
-        # file_prefix = tail.split('.')[0]
-        # gif_name = "/".join([self.gif_path, file_prefix + "_" + detect_time + ".gif"])
-        # self.save_gif(gif_name,buffer)
+        gif_name = "/".join([self.output_path, self.file_prefix + "_" + time_text + ".gif"])
+        self.save_gif(gif_name,buffer)
 
         #  append in result list 
         self.result.append(
-            {"image": buffer[20].copy(), "buffer": buffer.copy(), "detect_time": time_text, "cells": cell_map_list,
+            {"buffer": buffer.copy(), "detect_time": time_text, "cells": cell_map_list,
              "count": cell_count})
         log.debug("result:{}".format(len(self.result)))
 
@@ -97,8 +95,7 @@ class Management:
 
     def saveFile(self, dir_path="static/output"):
         log.info("start image saving...")
-        # out = cv2.VideoWriter(self.vid_file_name, fourcc, frate, (fwidth, fheight))
-        gif_path = "/".join([dir_path, "GIFs"])
+
         # if os.path.exists(dir_path):
         #     shutil.rmtree(dir_path, ignore_errors=True)
         # os.mkdir(dir_path)
@@ -108,12 +105,10 @@ class Management:
         file_prefix = tail.split('.')[0]
         self.respone = []
         for iter, l in enumerate(self.result):
-            image = l['image']
             buffer = l["buffer"]
             detect_time = l['detect_time']
             cells = l['cells']
             count = l["count"]
-            # drawBoxes(image, cells, (0, 255, 0))
 
             # save image
             # file_name = "/".join([dir_path, file_prefix + "_" + detect_time + ".png"])
@@ -121,9 +116,8 @@ class Management:
             # l.update({"image_path":file_name})
 
             # save GIF
-            #TODO move save gif to detect log
-            gif_name = "/".join([gif_path, file_prefix + "_" + detect_time + ".gif"])
-            self.save_gif(gif_name, buffer)
+            gif_name = "/".join([dir_path, file_prefix + "_" + detect_time + ".gif"])
+            # self.save_gif(gif_name, buffer)
             l.update({"gif_path": gif_name})
 
             self.respone.append({'gif': gif_name, "time": detect_time.replace("-", ":"), "count": count})
@@ -132,7 +126,7 @@ class Management:
 
     def get_result(self, keys=None):
         """ 
-        keys list have 4 key: "image" ,"gif", "time" , "count".
+        keys list have 4 key: "gif", "time" , "count".
         """
         if not keys or keys is None:
             return self.respone.copy()
@@ -141,7 +135,6 @@ class Management:
                 res_dict = dict()
                 for k in keys: res_dict[k] = res.get(k)
                 return res_dict
-
             return list(map(f, self.respone.copy()))
 
     def cap_release(self):
