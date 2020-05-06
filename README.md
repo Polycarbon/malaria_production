@@ -5,6 +5,12 @@
 ```sudo pip install -r requirements.txt```<br>
 ```python app.py```
 
+## Setup gifsicle
+you must setup gifsicle with manual.
+
+### Windows
+Follow [Guide](https://www.youtube.com/watch?v=5gdhQyP9Eog)
+
 ## Usage
 
 Once dependencies are installed, just run this to see it in your browser. 
@@ -12,4 +18,3 @@ Once dependencies are installed, just run this to see it in your browser.
 ```python app.py```
 
 That's it! It's serving a saved Keras model to you via Flask. 
-

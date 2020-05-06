@@ -2,19 +2,15 @@ from multiprocessing import Manager, Value
 from threading import Thread
 from ctypes import c_int, c_bool
 import os, cv2, sys, shutil, time
-
 import ffmpeg_streaming
 import imageio
+from pygifsicle import optimize
 import logging
-
-from PyQt5.QtCore import Qt
-
-from src.ObjectHandler import CellRect
 
 sys.path.append("src/")
 import VideoInfo
 from mfutils import drawBoxes, getHHMMSSFormat
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 log = logging.getLogger('Management')
 
@@ -29,6 +25,7 @@ class Management:
 
     def __init__(self, manager=Manager, output_path="static/output"):
         self.manager = manager()
+        self.progress = 0
         self.isfinish = Value(c_bool, False, lock=True)
         self.output_path = output_path
         self.curr_status = None
@@ -57,6 +54,9 @@ class Management:
             self.frameCount = VideoInfo.FRAME_COUNT
             self.duration = VideoInfo.DURATION
 
+            head, tail = os.path.split(self.video_path)
+            self.file_prefix = tail.split('.')[0]
+
         # clear folder output
         if os.path.exists(self.output_path):
             shutil.rmtree(self.output_path, ignore_errors=True)
@@ -74,8 +74,6 @@ class Management:
         cell_map_list = list(map(lambda cell: cell.getCoords(), cell_map.values()))
         buffer = []
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, detected_frame_id)
-        # _, min_, sec = getHHMMSSFormat(self.duration / self.frameCount * (detected_frame_id + 20) * 1000)
-        time_text = '{:02}-{:02}'.format(min_, sec)
         for obj in objects.values():
             _, image = self.cap.read()
             area_points = obj["area"]
@@ -91,8 +89,6 @@ class Management:
             RGB_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             buffer.append(RGB_image)
 
-        # plt.imshow(image)
-        # plt.show()
         """ 
         Concept
         A)  check areapoint is equal and flow_list ?
@@ -105,7 +101,6 @@ class Management:
         # file_prefix = tail.split('.')[0]
         # gif_name = "/".join([self.gif_path, file_prefix + "_" + detect_time + ".gif"])
         # self.save_gif(gif_name,buffer)
-        # in_area_cells = [cell for cell in cells.values() if area_points.containsPoint(cell.center(), Qt.OddEvenFill) and cell.isCounted]
 
         #  append in result list
         self.result.append(
@@ -114,7 +109,10 @@ class Management:
         log.debug("result:{}".format(len(self.result)))
 
     def save_gif(self, gif_name, buffer):
-        thread = Thread(target=imageio.mimwrite, args=(gif_name, buffer))
+        def f(gif_name, buffer):
+            imageio.mimwrite(gif_name, buffer)
+            optimize(gif_name)
+        thread = Thread(target=f, args=(gif_name, buffer))
         thread.start()
 
     def saveFile(self, dir_path="static/output"):
@@ -142,7 +140,7 @@ class Management:
 
     def get_result(self, keys=None):
         """ 
-        keys list have 4 key: "image" ,"gif", "time" , "count".
+        keys list have 4 key: "gif", "time" , "count".
         """
         if not keys or keys is None:
             return self.respone.copy()
@@ -151,7 +149,6 @@ class Management:
                 res_dict = dict()
                 for k in keys: res_dict[k] = res.get(k)
                 return res_dict
-
             return list(map(f, self.respone.copy()))
 
     def cap_release(self):
