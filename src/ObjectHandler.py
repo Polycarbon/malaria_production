@@ -23,9 +23,6 @@ class CellRect(QRectF):
     def getScore(self):
         return self.score
 
-    def isCounted(self):
-        return self.isCounted
-
     def count(self, id):
         self.isCounted = True
         self.isNew = True
@@ -50,7 +47,7 @@ class ObjectTracker:
         self.__disappeared = OrderedDict()
         self.nextObjectID = 0
         self.countId = 0
-        self.distance_threshold = 80
+        self.distance_threshold = 40
 
     def __register(self, object):
         # when registering an object we use the next available object
@@ -64,6 +61,9 @@ class ObjectTracker:
         # both of our respective dictionaries
         del self.__cells[objectID]
         del self.__disappeared[objectID]
+
+    def clear(self):
+        self.__cells = OrderedDict()
 
     def update(self, rects):
         # check to see if the list of input bounding box rectangles

@@ -13,10 +13,7 @@ def drawBoxes(image: np.ndarray,boxes, color=(0,255,0), thickness=2):
     if isinstance(boxes, dict):
         for box in boxes.values():
             if box.isCounted:
-                if box.isNew:
-                    color = (0, 255, 0)
-                else:
-                    color = (0, 255, 255)
+                color = (0, 255, 0)
                 cv2.putText(image, 'id {}'.format(box.count_id), (int(box.left()), int(box.bottom())+30), cv2.FONT_HERSHEY_SIMPLEX,
                             1, color,thickness=1)
             else:
