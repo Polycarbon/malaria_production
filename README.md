@@ -9,8 +9,8 @@
 you must setup gifsicle with manual.
 
 ### Windows
-Follow [Guide](https://www.youtube.com/watch?v=5gdhQyP9Eog)
-
+Follow [Guide](https://www.youtube.com/watch?v=5gdhQyP9Eog)<br>
+install ffmpeg Follow [Guide](https://www.ffmpeg.org/download.html)
 ## Usage
 
 Once dependencies are installed, just run this to see it in your browser. 
