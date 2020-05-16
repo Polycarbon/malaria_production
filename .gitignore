@@ -30,3 +30,5 @@ static/
 *.mp4
 
 gifsicle/
+
+dummy_response.json

@@ -18,3 +18,6 @@ ifaddr
 imutils
 scikit-image
 PyQt5
+imageio
+pygifsicle
+python-ffmpeg-video-streaming
