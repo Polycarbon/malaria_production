@@ -1,6 +1,6 @@
 import time,logging
 
-from app2 import get_respone,log
+from app2 import get_response,log
 from model.load import init
 from src.DetectorThread import Detector, PROPER_REGION, RESNET
 from src.Management import Management
@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     model, graph = None,None
     manager = Management()
-    manager.init("videos/manual_1-movie-resize.mp4")
+    manager.init("videos/manual_5-movie-resize.mp4")
     detector = Detector(
         manager=manager, mode=PROPER_REGION, model=model, graph=graph
     )
@@ -30,7 +30,8 @@ if __name__ == "__main__":
         isFinish = manager.get_finish()
         if isFinish:
             manager.saveFile()
-            res = get_respone(manager.get_result())
+            res = get_response(manager.get_result())
+            res['stream'] = "/".join(["", manager.stream_path ])
             log.info("data respone: {} - head(5):{}".format(len(res["data"]), res["data"][:5]))
             manager.cap_release()
             break
