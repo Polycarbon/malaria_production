@@ -17,12 +17,12 @@ def get_ip_window(interface='eth',verbose=False):
     adapters = ifaddr.get_adapters()
     for adapter in adapters:
         if "Virtual".lower() in adapter.nice_name.lower(): continue
-        if interface == 'eth' and "Ethernet Adapter".lower() in adapter.nice_name.lower():
+        if interface == 'eth' and "Ethernet".lower() in adapter.nice_name.lower():
             if verbose:
                 print("IPs of network adapter " + adapter.nice_name)
                 print( "   %s/%s" % (adapter.ips[0].ip, adapter.ips[0].network_prefix))
             return adapter.ips[0].ip
-        elif interface == 'wifi' and "Wireless Network Adapter".lower() in adapter.nice_name.lower():
+        elif interface == 'wifi' and "Wireless".lower() in adapter.nice_name.lower():
             if verbose:
                 print("IPs of network adapter " + adapter.nice_name)
                 print( "   %s/%s" % (adapter.ips[0].ip, adapter.ips[0].network_prefix))
@@ -44,3 +44,4 @@ def get_ip(os_name = None,*args, **kwargs):
 
 # Example
 # print(get_ip(interface='wifi',verbose=True))
+

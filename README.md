@@ -1,4 +1,4 @@
-# Deploy a Malaria detection Model to Production
+# Deploy a Malaria detection Model to Server production
 this project tested, can be used in python 3.6 and 3.7.
 
 ## Requirement
@@ -15,7 +15,13 @@ this project tested, can be used in python 3.6 and 3.7.
 
 ## Usage
 
-Once dependencies are installed, just run this to see it in your browser. 
+### Change SERVER_IP
+if you connect internet with LAN or Eternet, you should change ```interface = "eth"``` in ```app.py``` line 33 (```SERVER_IP```) or config manual by change SERVER_IP in else condition.
+
+Can see more in ```src/get_ip.py```  for auto get ip.
+
+### RUN
+Just run this command:
 
 ```python app.py```
 
