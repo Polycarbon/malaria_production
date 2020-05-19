@@ -32,7 +32,6 @@ class ObjectMapper(Thread):
         self.onUpdateProgress = manager.onUpdateProgress
         self.onObjectsMapUpdate = manager.updateFrameObjects
 
-    # TODO: updateDetectLog follow by grid per image not time_to_found per image.
     def run(self):
         log.info('start ObjectMapper...')
         while True:

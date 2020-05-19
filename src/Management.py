@@ -2,6 +2,7 @@ from multiprocessing import Manager, Value
 from threading import Thread
 from ctypes import c_int, c_bool
 import os, cv2, sys, shutil, time
+import numpy as np
 import ffmpeg_streaming
 import imageio
 from pygifsicle import optimize
@@ -66,7 +67,6 @@ class Management:
 
     # TODO optimize parameter
     def updateDetectLog(self, detected_frame_id, area_points, curr_area_id, cell_map, cell_count, objects):
-        # append log
         self.sum_cells.value += cell_count
         time_ms = self.duration / self.frameCount * detected_frame_id * 1000
         _, min_, sec = getHHMMSSFormat(time_ms)
@@ -87,14 +87,8 @@ class Management:
             cells = obj["cells"]
             drawBoxes(image, cells, (0, 255, 0))
             RGB_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            buffer.append(RGB_image)
-
-        """ 
-        Concept
-        A)  check areapoint is equal and flow_list ?
-            check cells in area if new cells -> append it
-        B)  append GridID
-        """
+            if int(np.sum(RGB_image)) > 0: 
+                buffer.append(RGB_image)
 
         # save GIF if saveFile is `Slow`
         # head, tail = os.path.split(self.video_path)
@@ -103,15 +97,20 @@ class Management:
         # self.save_gif(gif_name,buffer)
 
         #  append in result list
-        self.result.append(
-            {"buffer": buffer.copy(), "detect_time": time_text, "detect_time_ms": int(time_ms), "cells": cell_map_list,
-             "count": cell_count, "grid_id": curr_area_id})
-        log.debug("result:{}".format(len(self.result)))
+        if len(buffer) > 0:
+            self.result.append(
+                {"buffer": buffer.copy(), "detect_time": time_text, "detect_time_ms": int(time_ms), "cells": cell_map_list,
+                "count": cell_count, "grid_id": curr_area_id})
+            log.debug("result:{}".format(len(self.result)))
 
     def save_gif(self, gif_name, buffer):
         def f(gif_name, buffer):
-            imageio.mimwrite(gif_name, buffer)
-            optimize(gif_name)
+            try:
+                imageio.mimwrite(gif_name, buffer)
+                optimize(gif_name)
+            except RuntimeError:
+                print("gif:{},(len:{}),{}".format(gif_name,len(buffer),np.sum(buffer, axis = 0)))
+                
         thread = Thread(target=f, args=(gif_name, buffer))
         thread.start()
 
@@ -168,7 +167,8 @@ class Management:
         # print("Set isFisnish:", self.isfinish.value)
 
     def updateFrameObjects(self, frame_objects):
-        assert len(frame_objects) == VideoInfo.FRAME_COUNT
+        # assert len(frame_objects) == VideoInfo.FRAME_COUNT ,\
+        #     str(len(frame_objects))+'=='+str(VideoInfo.FRAME_COUNT)
         head, tail = os.path.split(self.video_path)
         file_prefix = tail.split('.')[0]
         media_path = "/".join([self.output_path, "media"])

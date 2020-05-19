@@ -1,0 +1,124 @@
+{
+	"info": {
+		"_postman_id": "428bcc31-c2ef-49c2-b051-02eabe4e0992",
+		"name": "Malaria",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "postRtsp",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"endpoint\": \"rtsp://192.168.1.23:1936\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://192.168.1.15:5000/postRtsp",
+					"protocol": "http",
+					"host": [
+						"192",
+						"168",
+						"1",
+						"15"
+					],
+					"port": "5000",
+					"path": [
+						"postRtsp"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "upload",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/E:/Senior Project/Mobile/malaria_production/.env/videos/Full Videos/manual_5-movie-resize.mp4"
+						}
+					],
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://192.168.1.3:5000/upload",
+					"protocol": "http",
+					"host": [
+						"192",
+						"168",
+						"1",
+						"3"
+					],
+					"port": "5000",
+					"path": [
+						"upload"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "getTest",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "http://192.168.1.3:5000/getTest",
+					"protocol": "http",
+					"host": [
+						"192",
+						"168",
+						"1",
+						"3"
+					],
+					"port": "5000",
+					"path": [
+						"getTest"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
