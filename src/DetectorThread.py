@@ -16,13 +16,15 @@ log = logging.getLogger('Detector')
 
 PROPER_REGION = 0
 RESNET = 1
-BLOB = 2
+
+
+
 class Detector:
     def __init__(self,manager=None,mode = PROPER_REGION,model=None,graph=None):
         self.Q = manager.Q
         self.mode = mode
-        # self.model = model
-        # self.graph = graph
+        self.model = model
+        self.graph = graph
         self.initModel()
     
     def initModel(self, path='model/resnet50v2conf_67.h5', backbone='resnet50'):
@@ -42,7 +44,6 @@ class Detector:
             t.start()
     
     def detect(self,cur_frame_id, buffer):
-        global model,graph
         v_max = 10
         v_min = 1
         verticals, horizontals = extractLines(buffer[0], threshold=0.66)
@@ -65,8 +66,8 @@ class Detector:
             image = np.stack((normframe,) * 3, axis=-1)
             image = preprocess_image(image)
             image, scale = resize_image(image)
-            with graph.as_default():
-                boxes, scores, labels = model.predict_on_batch(np.expand_dims(image, axis=0))
+            with self.graph.as_default():
+                boxes, scores, labels = self.model.predict_on_batch(np.expand_dims(image, axis=0))
             boxes /= scale
             cells = []
             sc = []
