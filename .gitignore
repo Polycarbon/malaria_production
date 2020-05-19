@@ -30,8 +30,5 @@ static/
 *.mp4
 
 gifsicle/
-<<<<<<< HEAD
-=======
 
 dummy_response.json
->>>>>>> v2.1
