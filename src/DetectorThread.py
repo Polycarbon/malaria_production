@@ -5,7 +5,7 @@ from multiprocessing import Queue, Manager, Process
 
 import cv2
 import numpy as np
-from LineHandler import extractLines, calculateBoundingPoints, extend_verticals, extend_horizontals
+from src.LineHandler import extractLines, calculateBoundingPoints, extend_verticals, extend_horizontals
 from skimage.filters import threshold_yen
 from skimage.measure import label, regionprops
 from skimage.morphology import binary_closing

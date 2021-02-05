@@ -30,8 +30,10 @@ ALLOWED_EXTENSIONS = {"mp4", "avi"}
 # initalize ip address and path
 # WARNING: should close firewall.
 log.warning("should close firewall.")
+project_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(project_dir)
 SERVER_IP = (
-    get_ip(interface="wifi")
+    get_ip(interface="wifi")[0]
     if get_ip(interface="wifi") is not None
     else "192.168.1.103"
 )
@@ -169,6 +171,7 @@ def predict_upload():
 
 if __name__ == "__main__":
     manager = Management()
+    from tensorflow.keras.utils import multi_gpu_model
     model, graph = init()
     # decide what port to run the app in
     port = int(os.environ.get("PORT", PORT))

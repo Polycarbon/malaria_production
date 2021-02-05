@@ -2,12 +2,14 @@ import logging
 import os, sys
 from threading import Thread
 from imutils.video import FileVideoStream
-import VideoInfo
+
 from multiprocessing import Queue, Manager, Process
 
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+
+from src import VideoInfo
 
 log = logging.getLogger('Preprocessor')
 

@@ -8,9 +8,11 @@ import imageio
 from pygifsicle import optimize
 import logging
 
+from src import VideoInfo
+
 sys.path.append("src/")
-import VideoInfo
-from mfutils import drawBoxes, getHHMMSSFormat
+
+from src.mfutils import drawBoxes, getHHMMSSFormat
 # import matplotlib.pyplot as plt
 
 log = logging.getLogger('Management')

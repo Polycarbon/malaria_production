@@ -14,8 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import keras
-from keras.utils import get_file
+from tensorflow import keras
 
 from . import retinanet
 from . import Backbone
@@ -38,13 +37,13 @@ class EfficientNetBackbone(Backbone):
     def download_imagenet(self):
         """ Downloads ImageNet weights and returns path to weights file.
         """
-        from efficientnet.model import BASE_WEIGHTS_PATH
-        from efficientnet.model import WEIGHTS_HASHES
+        from efficientnet.weights import IMAGENET_WEIGHTS_PATH
+        from efficientnet.weights import IMAGENET_WEIGHTS_HASHES
 
         model_name = 'efficientnet-b' + self.backbone[-1]
         file_name = model_name + '_weights_tf_dim_ordering_tf_kernels_autoaugment_notop.h5'
-        file_hash = WEIGHTS_HASHES[model_name][1]
-        weights_path = get_file(file_name, BASE_WEIGHTS_PATH + file_name, cache_subdir='models', file_hash=file_hash)
+        file_hash = IMAGENET_WEIGHTS_HASHES[model_name][1]
+        weights_path = keras.utils.get_file(file_name, IMAGENET_WEIGHTS_PATH + file_name, cache_subdir='models', file_hash=file_hash)
         return weights_path
 
     def validate(self):
@@ -117,8 +116,15 @@ def effnet_retinanet(num_classes, backbone='EfficientNetB0', inputs=None, modifi
     if modifier:
         model = modifier(model)
 
+    # C2 not provided
+    backbone_layers = {
+        'C3': model.outputs[0],
+        'C4': model.outputs[1],
+        'C5': model.outputs[2]
+    }
+
     # create the full model
-    return retinanet.retinanet(inputs=inputs, num_classes=num_classes, backbone_layers=model.outputs, **kwargs)
+    return retinanet.retinanet(inputs=inputs, num_classes=num_classes, backbone_layers=backbone_layers, **kwargs)
 
 
 def EfficientNetB0_retinanet(num_classes, inputs=None, **kwargs):

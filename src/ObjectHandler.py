@@ -6,8 +6,10 @@ from scipy.spatial.distance import cdist
 import numpy as np
 
 # TODO: result_image per grid
+from src import VideoInfo
+
 sys.path.append("src/")
-import VideoInfo
+
 
 
 class CellRect(QRectF):

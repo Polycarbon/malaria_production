@@ -4,12 +4,12 @@ from collections import defaultdict
 from threading import Thread
 from multiprocessing import Queue, Manager, Process
 
-import VideoInfo
+
 
 from PyQt5.QtCore import QPointF, Qt, QPoint
 from PyQt5.QtGui import QPolygonF
-from ObjectHandler import ObjectTracker, CellRect
-from centroidtracker import CentroidTracker
+from src.ObjectHandler import ObjectTracker, CellRect
+from src import VideoInfo
 
 log = logging.getLogger('ObjMapper')
 
