@@ -32,11 +32,7 @@ ALLOWED_EXTENSIONS = {"mp4", "avi"}
 log.warning("should close firewall.")
 project_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(project_dir)
-SERVER_IP = (
-    get_ip(interface="wifi")[0]
-    if get_ip(interface="wifi") is not None
-    else "192.168.1.103"
-)
+SERVER_IP = "WIFI_IPV4_ADDRESS"
 PORT = 5000
 SERVER_URL = "http://" + SERVER_IP + ":" + str(PORT)
 STATIC_PATH = SERVER_URL + "/static/"
